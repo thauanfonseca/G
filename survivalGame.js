@@ -3,7 +3,7 @@ class PixelRenderer {
     static drawSprite(ctx, e, isPlayer) {
         if (!e || typeof e.x !== 'number') return;
         
-        // Decorações (Árvores/Cactos)
+        // Decorações
         if (e.type === 'decoration') { 
             if (e.style === 'cactus') this.drawCactus(ctx, e);
             else this.drawTree(ctx, e); 
@@ -13,7 +13,6 @@ class PixelRenderer {
         // Projéteis
         if (e.type === 'projectile') { this.drawProjectile(ctx, e); return; }
 
-        // Configurações Básicas
         const scale = e.scale || 1;
         const level = e.level || 1;
         const time = Date.now() / 200; 
@@ -23,48 +22,33 @@ class PixelRenderer {
         ctx.translate(e.x, e.y);
         ctx.scale(scale, scale);
 
-        // Sombra no chão
+        // Sombra
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; 
-        ctx.beginPath(); 
-        ctx.ellipse(0, 5, 14, 6, 0, 0, Math.PI*2); 
-        ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 5, 14, 6, 0, 0, Math.PI*2); ctx.fill();
 
-        // Efeitos Especiais (Auras)
+        // Auras
         if (e.isBoss) {
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, -15, 30 + breathe, 0, Math.PI*2); ctx.stroke();
         }
         if (isPlayer && e.shieldActive) {
-            ctx.strokeStyle = '#00b894';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#00b894'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, -15, 25, 0, Math.PI*2); ctx.stroke();
         }
 
-        // Flash de Dano (Branco)
-        if (e.justHit) {
-            ctx.globalAlpha = 0.7; ctx.fillStyle = '#fff';
-        }
+        if (e.justHit) { ctx.globalAlpha = 0.7; ctx.fillStyle = '#fff'; }
 
-        // DESENHO DO PERSONAGEM HUMANÓIDE
         this.drawHumanoid(ctx, e, isPlayer, breathe);
-
         ctx.restore();
 
-        // Barra de Vida (Inimigos)
+        // Barra de Vida
         if (e.maxHp && !isPlayer) {
             const hpPct = Math.max(0, e.currentHp/e.maxHp);
-            const yOffset = -50 * scale;
-            // Fundo barra
+            const yOffset = -55 * scale;
             ctx.fillStyle = '#000'; ctx.fillRect(e.x-20, e.y+yOffset, 40, 6);
-            // Cor da barra
             ctx.fillStyle = e.isBoss?'#e74c3c':(e.isMiniBoss?'#f1c40f':'#ff4757');
             ctx.fillRect(e.x-19, e.y+yOffset+1, 38*hpPct, 4);
-            
-            // Mostra Level
-            ctx.fillStyle = '#fff'; 
-            ctx.font = 'bold 10px Arial'; 
-            ctx.textAlign = 'center';
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center';
             ctx.fillText(`Lv.${level}`, e.x, e.y+yOffset-2);
         }
     }
@@ -72,16 +56,12 @@ class PixelRenderer {
     static drawHumanoid(ctx, e, isPlayer, animY) {
         const color = isPlayer ? e.class.color : (e.color || '#e74c3c');
         const level = e.level || 1;
-        
-        // Cores Base
         const skinColor = '#ffccaa';
-        const armorColor = level >= 10 ? '#ffd700' : (level >= 5 ? '#95a5a6' : color); 
+        const armorColor = level >= 10 ? '#f1c40f' : (level >= 5 ? '#95a5a6' : color); 
         const pantsColor = '#2d3436';
 
-        // Direção do olhar
         const facingX = e.facing ? e.facing.x : (e.vx > 0 ? 1 : -1);
         
-        // PERNAS (Animadas se movendo)
         const isMoving = (Math.abs(e.vx||0) > 0.1 || Math.abs(e.vy||0) > 0.1);
         const walk = isMoving ? Math.sin(Date.now() / 100) * 3 : 0;
         
@@ -89,36 +69,22 @@ class PixelRenderer {
         ctx.fillRect(-6, -5, 4, 12 + walk); // Perna Esq
         ctx.fillRect(2, -5, 4, 12 - walk); // Perna Dir
 
-        // CORPO (Move com respiração)
         ctx.translate(0, -14 + animY); 
-        
-        // Armadura/Torso
-        ctx.fillStyle = armorColor;
-        ctx.fillRect(-8, 0, 16, 14);
-        
-        // Cinto
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fillRect(-8, 10, 16, 4);
+        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); // Torso
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-8, 10, 16, 4); // Cinto
 
-        // CABEÇA
-        ctx.fillStyle = skinColor;
-        ctx.fillRect(-7, -12, 14, 12);
+        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); // Cabeça
 
-        // CAPACETE
-        if (level >= 5) {
-            ctx.fillStyle = level >= 10 ? '#ffd700' : '#7f8c8d'; 
-            ctx.fillRect(-8, -14, 16, 6); 
-            ctx.fillRect(-8, -14, 4, 14); 
+        if (level >= 5) { // Capacete
+            ctx.fillStyle = level >= 10 ? '#f1c40f' : '#7f8c8d'; 
+            ctx.fillRect(-8, -14, 16, 6); ctx.fillRect(-8, -14, 4, 14); 
             if(facingX < 0) ctx.fillRect(4, -14, 4, 14); 
         }
 
-        // OLHOS
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#000'; // Olhos
         const eyeOffset = facingX > 0 ? 2 : -2;
-        ctx.fillRect(-2 + eyeOffset, -8, 2, 2);
-        ctx.fillRect(2 + eyeOffset, -8, 2, 2);
+        ctx.fillRect(-2 + eyeOffset, -8, 2, 2); ctx.fillRect(2 + eyeOffset, -8, 2, 2);
 
-        // ARMA
         this.drawWeapon(ctx, e, isPlayer);
     }
 
@@ -126,12 +92,8 @@ class PixelRenderer {
         ctx.save();
         const weaponType = isPlayer ? e.class.weapon : (e.weapon || 'sword');
         const level = e.level || 1;
-        
         ctx.translate(10, 5); 
-        
-        if (e.justHit || (isPlayer && window.game && window.game.spacePressed)) {
-            ctx.rotate(Math.sin(Date.now()/50)); 
-        }
+        if (e.justHit || (isPlayer && window.game && window.game.spacePressed)) ctx.rotate(Math.sin(Date.now()/50)); 
 
         const wColor = level >= 8 ? '#e1b12c' : '#bdc3c7';
 
@@ -141,18 +103,15 @@ class PixelRenderer {
             ctx.fillStyle = '#95a5a6'; ctx.fillRect(-5, -2, 10, 2); 
         } else if (weaponType === 'axe') {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, -10, 4, 20); 
-            ctx.fillStyle = wColor; 
-            ctx.beginPath(); ctx.arc(0, -8, 8, 0, Math.PI, true); ctx.fill(); 
+            ctx.fillStyle = wColor; ctx.beginPath(); ctx.arc(0, -8, 8, 0, Math.PI, true); ctx.fill(); 
         } else if (weaponType === 'staff') {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, -15, 4, 30); 
-            ctx.fillStyle = e.class ? e.class.color : '#f00'; 
-            ctx.beginPath(); ctx.arc(0, -15, 5, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = e.class ? e.class.color : '#f00'; ctx.beginPath(); ctx.arc(0, -15, 5, 0, Math.PI*2); ctx.fill(); 
         } else if (weaponType === 'bow') {
             ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, 0, 10, -Math.PI/2, Math.PI/2); ctx.stroke(); 
             ctx.fillStyle = '#fff'; ctx.fillRect(0, -10, 1, 20); 
         }
-
         ctx.restore();
     }
 
@@ -161,40 +120,38 @@ class PixelRenderer {
         ctx.translate(p.x, p.y);
         const angle = Math.atan2(p.vy, p.vx);
         ctx.rotate(angle);
-
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = p.color;
-
+        ctx.shadowBlur = 10; ctx.shadowColor = p.color;
         if (p.style === 'arrow') {
             ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-10, -1, 20, 2);
             ctx.beginPath(); ctx.moveTo(10, -3); ctx.lineTo(15, 0); ctx.lineTo(10, 3); ctx.fill(); 
-        } else if (p.style === 'magic' || p.style === 'fire') {
-            ctx.fillStyle = p.color; 
-            ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
-        } else if (p.style === 'leaf') {
-            ctx.fillStyle = '#2ecc71'; 
-            ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+        } else if (p.style === 'magic') {
+            ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
+        } else { // Leaf or other
+            ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2); ctx.fill();
         }
         ctx.restore();
     }
 
-    // Cenário
+    // Cenário com Efeito de Profundidade
     static drawTree(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
-        // Tronco (Menor para ajudar na ilusão de profundidade)
-        ctx.fillStyle = '#5d4037'; ctx.fillRect(-6, -15, 12, 20);
-        // Folhas (Desenhadas acima da origem Y)
+        // Sombra da árvore
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0, 0, 20, 8, 0, 0, Math.PI*2); ctx.fill();
+        // Tronco
+        ctx.fillStyle = '#5d4037'; ctx.fillRect(-8, -20, 16, 25);
+        // Copa
         ctx.fillStyle = '#2d6a4f'; 
-        ctx.beginPath(); ctx.moveTo(0, -55); ctx.lineTo(-20, -15); ctx.lineTo(20, -15); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(-16, -10); ctx.lineTo(16, -10); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(-25, -20); ctx.lineTo(25, -20); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, -50); ctx.lineTo(-20, -10); ctx.lineTo(20, -10); ctx.fill();
         ctx.restore();
     }
     static drawCactus(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0, 0, 15, 6, 0, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#27ae60'; 
-        ctx.fillRect(-8, -40, 16, 45); 
-        ctx.fillRect(-16, -25, 8, 8); ctx.fillRect(-16, -35, 6, 10); 
-        ctx.fillRect(8, -20, 8, 8); ctx.fillRect(10, -30, 6, 10);
+        ctx.fillRect(-10, -45, 20, 50); 
+        ctx.fillRect(-20, -30, 10, 8); ctx.fillRect(-20, -40, 6, 10); 
+        ctx.fillRect(10, -25, 10, 8); ctx.fillRect(14, -35, 6, 10);
         ctx.restore();
     }
 }
@@ -241,8 +198,8 @@ class SurvivalGame {
         const bind = (s, k) => { 
             const el = document.querySelector(s); 
             if(el){ 
-                el.addEventListener('touchstart',e=>{e.preventDefault();this.keys[k]=true}); 
-                el.addEventListener('touchend',e=>{e.preventDefault();this.keys[k]=false}); 
+                el.addEventListener('touchstart',e=>{e.preventDefault();this.keys[k]=true; el.classList.add('active');}); 
+                el.addEventListener('touchend',e=>{e.preventDefault();this.keys[k]=false; el.classList.remove('active');}); 
             }
         };
         bind('.control-up','w'); bind('.control-down','s'); bind('.control-left','a'); bind('.control-right','d'); bind('.control-action',' ');
@@ -297,15 +254,17 @@ class SurvivalGame {
         gameEngine.biomeKills = 0; 
 
         const decoType = biome.decoration || 'tree';
-        // Gera decorações
-        for(let i=0; i<50; i++) {
+        // Menos decorações para melhorar performance
+        for(let i=0; i<40; i++) {
             this.decorations.push({ 
                 x: Math.random()*2400-1200, 
                 y: Math.random()*1800-900, 
                 type: 'decoration', 
                 style: decoType,
-                scale: 0.9 + Math.random()*0.3,
-                collisionRadius: 15 // Raio de colisão menor para o tronco
+                scale: 0.8 + Math.random()*0.4,
+                // Caixa de Colisão (Largura e Altura) na base
+                width: 20,
+                height: 15
             });
         }
 
@@ -346,11 +305,10 @@ class SurvivalGame {
         if(!data) return;
         const enemy = gameEngine.createEnemy(data, isBoss, isMiniBoss, diff);
         
-        // Proteção contra loop infinito no spawn
         let safe = false;
         let attempts = 0;
         
-        while(!safe && attempts < 50) { 
+        while(!safe && attempts < 40) { 
             const angle = Math.random()*Math.PI*2;
             const dist = isBoss ? 600 : (450 + Math.random()*400);
             enemy.x = gameEngine.player.x + Math.cos(angle)*dist;
@@ -393,7 +351,6 @@ class SurvivalGame {
     update(dt) {
         const p = gameEngine.player; if(!p) return;
         
-        // 1. INPUT & MOVIMENTO
         let dx = 0, dy = 0;
         if(this.keys['w']||this.keys['arrowup']) dy = -1;
         if(this.keys['s']||this.keys['arrowdown']) dy = 1;
@@ -408,32 +365,30 @@ class SurvivalGame {
             if(l > 0) { p.facing.x /= l; p.facing.y /= l; }
         } else if(!p.facing) p.facing = {x: 0, y: 1};
 
+        // MOVIMENTO + COLISÃO RETANGULAR (Bounding Box)
         if(dx !== 0 || dy !== 0) {
             const len = Math.hypot(dx,dy);
             const moveX = (dx/len)*p.speed*dt;
             const moveY = (dy/len)*p.speed*dt;
 
-            let canMove = true;
-            const futureX = p.x + moveX;
-            const futureY = p.y + moveY;
-
-            // Colisão mais permissiva com árvores (apenas tronco)
+            // Tenta mover X
+            let canMoveX = true;
+            let nextX = p.x + moveX;
             for(let t of this.decorations) {
-                const dist = Math.hypot(futureX - t.x, futureY - t.y);
-                const collisionRadius = t.collisionRadius || 20;
-                if(dist < collisionRadius) { 
-                    canMove = false; 
-                    break; 
-                }
+                if(this.checkRectCollision(nextX, p.y, t)) { canMoveX = false; break; }
             }
-            
-            if(canMove) { 
-                p.x += moveX; 
-                p.y += moveY; 
+            if(canMoveX) p.x += moveX;
+
+            // Tenta mover Y
+            let canMoveY = true;
+            let nextY = p.y + moveY;
+            for(let t of this.decorations) {
+                if(this.checkRectCollision(p.x, nextY, t)) { canMoveY = false; break; }
             }
+            if(canMoveY) p.y += moveY;
         }
         
-        // 2. ABILITIES
+        // ABILITIES
         if(this.keys['q'] && this.abilitySystem) {
             if(!this.qPressed) {
                 this.qPressed = true;
@@ -441,14 +396,14 @@ class SurvivalGame {
             }
         } else { this.qPressed = false; }
 
-        // 3. ATAQUE BÁSICO
+        // ATAQUE
         if(this.keys[' '] && !this.spacePressed) { 
             this.spacePressed=true; 
             this.handlePlayerAttack(); 
         }
         if(!this.keys[' ']) this.spacePressed=false;
 
-        // 4. PROJÉTEIS
+        // PROJÉTEIS
         this.projectiles = this.projectiles.filter(proj => {
             proj.x += proj.vx * dt;
             proj.y += proj.vy * dt;
@@ -456,7 +411,7 @@ class SurvivalGame {
             
             if(proj.fromPlayer) {
                 for(let enemy of this.gameObjects) {
-                    const hitSize = 30;
+                    const hitSize = 35;
                     if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < hitSize) {
                         const res = gameEngine.playerAttack(enemy);
                         const combo = this.comboSystem.recordHit(res.damage);
@@ -474,11 +429,11 @@ class SurvivalGame {
             return proj.life > 0;
         });
 
-        // 5. INIMIGOS
+        // INIMIGOS
         const now = performance.now();
         this.gameObjects.forEach(e => {
             const dist = Math.hypot(p.x-e.x, p.y-e.y);
-            const stop = 25;
+            const stop = 30;
             
             if(dist > stop) {
                 const speed = e.speed * (e.justHit ? 0.5 : 1); 
@@ -499,15 +454,37 @@ class SurvivalGame {
             }
         });
 
+        // Limpeza e Otimização
         this.floatingTexts = this.floatingTexts.filter(t=>t.life>0);
         this.floatingTexts.forEach(t=>{ t.y-=30*dt; t.life-=dt; });
+    }
+
+    // Colisão Retangular (AABB)
+    checkRectCollision(px, py, t) {
+        // Caixa do jogador (pés)
+        const pW = 16; const pH = 8;
+        // Caixa da árvore (base)
+        const tW = t.width || 20; const tH = t.height || 15;
+        
+        return (px > t.x - tW && px < t.x + tW &&
+                py > t.y - tH && py < t.y + tH);
     }
 
     handlePlayerAttack() {
         const p = gameEngine.player;
         let shotDirX = p.facing.x;
         let shotDirY = p.facing.y;
+        
+        // Se parado, assume direção padrão
         if (shotDirX === 0 && shotDirY === 0) shotDirX = 1;
+
+        // === MECÂNICA DE KITING (Atirar para trás) ===
+        // Se a classe é ranged E o jogador está se movendo...
+        if (p.class.type === 'ranged' && (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1)) {
+             // Inverte a direção do tiro
+             shotDirX = -shotDirX;
+             shotDirY = -shotDirY;
+        }
 
         if (p.class.type === 'ranged') {
             this.projectiles.push({
@@ -524,7 +501,8 @@ class SurvivalGame {
                 const dist = Math.hypot(p.x-e.x, p.y-e.y);
                 const dx = e.x - p.x;
                 const dy = e.y - p.y;
-                const dot = (dx * shotDirX) + (dy * shotDirY);
+                // Melee ataca sempre para onde está olhando (sem kiting invertido)
+                const dot = (dx * p.facing.x) + (dy * p.facing.y);
 
                 if(dist < 90 && dot > 0) { 
                     const res = gameEngine.playerAttack(e);
@@ -603,9 +581,7 @@ class SurvivalGame {
         for(let y=startY; y<cy+this.canvas.height; y+=gridSize) { this.ctx.moveTo(cx,y); this.ctx.lineTo(cx+this.canvas.width,y); }
         this.ctx.stroke();
 
-        // CORREÇÃO ORDEM DE DESENHO (Z-Index)
-        // Ordena tudo por Y. O que tem Y menor (mais ao topo da tela) é desenhado antes.
-        // O que tem Y maior (mais embaixo) é desenhado depois, ficando na frente.
+        // Z-Order Sorting
         const all = [...this.gameObjects, p, ...this.decorations, ...this.projectiles];
         all.sort((a,b)=>{
             const yA = a.y || 0;
@@ -625,7 +601,7 @@ class SurvivalGame {
         });
         this.ctx.restore();
 
-        // === HUD ===
+        // HUD
         this.ctx.globalAlpha=1;
         this.ctx.fillStyle='rgba(0,0,0,0.7)'; this.ctx.strokeStyle='#fff'; this.ctx.lineWidth=2;
         this.ctx.roundRect ? this.ctx.roundRect(10,10,300,100,10) : this.ctx.fillRect(10,10,300,100);

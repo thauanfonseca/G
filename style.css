@@ -21,7 +21,7 @@ body {
 .screen {
   position: absolute;
   inset: 0;
-  display: none; /* Escondido por padrão */
+  display: none; 
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -31,9 +31,7 @@ body {
   height: 100vh;
 }
 
-.screen.active { 
-  display: flex; /* Mostra apenas se tiver a classe active */
-}
+.screen.active { display: flex; }
 
 /* === BOTÕES GERAIS === */
 button {
@@ -65,11 +63,7 @@ h1, h2 {
 }
 
 /* === JOGO E CANVAS === */
-#game-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-}
+#game-container { position: relative; width: 100vw; height: 100vh; }
 
 canvas {
   display: block;
@@ -78,64 +72,11 @@ canvas {
   background: #151a1e;
 }
 
-/* === HUD (Interface do Jogo) === */
-#game-hud {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  pointer-events: none; /* Permite clicar no jogo através do HUD */
-  z-index: 20;
-}
-
-/* O HUD só deve aparecer quando a tela do jogo estiver ativa.
-   Como ele está dentro da div #game-screen no HTML, 
-   o CSS da .screen já resolve isso. */
-
-.hud-row {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.stat-box {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  font-size: 0.8rem;
-  color: #fff;
-}
-
-/* Barras de Vida e XP */
-.bar-container {
-  width: 250px;
-  height: 24px;
-  background: #000;
-  border: 2px solid #555;
-  border-radius: 4px;
-  position: relative;
-}
-
-.bar-fill {
-  height: 100%;
-  width: 100%;
-  transition: width 0.3s;
-}
-
-#hp-bar { background: linear-gradient(90deg, #d63031, #ff7675); }
-#xp-bar { background: linear-gradient(90deg, #0984e3, #74b9ff); }
-
-.bar-text {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 0.7rem;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px #000;
-  z-index: 2;
+/* === OVERLAY DE DANO === */
+#damage-overlay {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle, transparent 50%, rgba(255,0,0,0.5) 100%);
+    opacity: 0; transition: opacity 0.1s; z-index: 5;
 }
 
 /* === SELEÇÃO DE CLASSE === */
@@ -170,24 +111,7 @@ canvas {
 .class-card .title { color: #ffdd59; margin-bottom: 5px; font-size: 1rem;}
 .class-card .desc { font-size: 0.7rem; color: #b2bec3; margin-bottom: 10px; line-height: 1.4;}
 
-/* === OPÇÕES === */
-.option-group {
-  margin: 20px 0;
-  text-align: center;
-}
-label { display: block; margin-bottom: 10px; }
-input[type=range] { width: 300px; }
-
 /* === HISTÓRIA / POPUP === */
-#story-popup {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.9);
-  display: none; /* Controlado via JS */
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
 .story-content {
   background: var(--panel-color);
   border: 4px double var(--accent-color);
@@ -195,9 +119,63 @@ input[type=range] { width: 300px; }
   max-width: 800px;
   text-align: center;
 }
+.story-content p { font-size: 1rem; line-height: 1.8; margin: 20px 0; }
 
-.story-content p {
-  font-size: 1rem;
-  line-height: 1.8;
-  margin: 20px 0;
+/* --- CONTROLES MOBILE MELHORADOS --- */
+#controls {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 200px;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+    display: none; 
+    pointer-events: none; 
+    z-index: 15;
+}
+
+#controls.visible { display: block; }
+
+.control-btn {
+    position: absolute; width: 65px; height: 65px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1); 
+    color: rgba(255,255,255,0.8); 
+    font-size: 1.8rem;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(255,255,255,0.2); 
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    pointer-events: auto; 
+    touch-action: manipulation;
+    transition: transform 0.1s, background 0.1s;
+}
+
+.control-btn.active, .control-btn:active {
+    background: rgba(0, 184, 148, 0.6);
+    transform: scale(0.9);
+    border-color: #fff;
+}
+
+/* Posicionamento Ergonômico */
+.control-left { bottom: 50px; left: 20px; }
+.control-right { bottom: 50px; left: 160px; }
+.control-up { bottom: 120px; left: 90px; }
+.control-down { bottom: 50px; left: 90px; }
+
+.control-action { 
+    bottom: 60px; right: 40px; 
+    width: 90px; height: 90px; 
+    background: rgba(214,48,49,0.3); 
+    font-size: 2.5rem;
+    border-color: rgba(214,48,49,0.5);
+}
+.control-action.active, .control-action:active {
+    background: rgba(214,48,49,0.8);
+}
+
+.control-skill {
+    bottom: 180px; right: 50px;
+    width: 60px; height: 60px;
+    background: rgba(9, 132, 227, 0.3);
+    font-size: 1.2rem; font-weight: bold;
+    border-color: rgba(9, 132, 227, 0.5);
+}
+.control-skill.active, .control-skill:active {
+    background: rgba(9, 132, 227, 0.8);
 }

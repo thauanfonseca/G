@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crônicas de Elandor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="damage-overlay"></div>
+
+        <div id="menu-screen" class="screen active">
+            <h1>CRÔNICAS DE ELANDOR</h1>
+            <button class="btn btn--primary" onclick="storyEngine.startNewGameWithIntro()">Nova Jornada</button>
+            <br><br>
+            <button class="btn" onclick="saveSystem.loadGame()">Carregar Jogo</button>
+        </div>
+
+        <div id="story-screen" class="screen">
+            <h2 id="story-title"></h2>
+            <p id="story-text" class="story-text"></p>
+            <button id="story-next-btn" class="btn btn--primary">Continuar</button>
+        </div>
+
+        <div id="class-selection-screen" class="screen">
+            <h2>Escolha sua Classe</h2>
+            <div id="class-grid"></div>
+        </div>
+
+        <div id="game-screen" class="screen"></div>
+
+        <div id="game-over-screen" class="screen">
+            <h2 style="color:#d63031">FIM DE JOGO</h2>
+            <p>Inimigos Derrotados: <span id="final-score" style="color:#ffeaa7">0</span></p>
+            <button class="btn" onclick="location.reload()">Tentar Novamente</button>
+        </div>
+
+        <div id="controls">
+            <div class="control-btn control-up">↑</div>
+            <div class="control-btn control-down">↓</div>
+            <div class="control-btn control-left">←</div>
+            <div class="control-btn control-right">→</div>
+            <div class="control-btn control-action">⚔</div>
+            <div class="control-btn control-skill" style="bottom: 140px; right: 30px; background:rgba(52, 152, 219, 0.4); font-size:1.5rem;">Q</div>
+        </div>
+    </div>
+
+    <script src="gameData.js"></script>
+    <script src="audioManager.js"></script> <script src="comboSystem.js"></script> <script src="gameEngine.js"></script>
+    <script src="abilities.js"></script>    <script src="saveSystem.js"></script>   <script src="storyEngine.js"></script>
+    <script src="survivalGame.js"></script>
+
+    <script>
+        // Inicialização Global
+        let game, gameEngine, storyEngine, audioManager;
+        
+        window.onload = () => {
+            // Verifica se audioManager já foi criado no arquivo dele, senão cria
+            if (typeof AudioManager !== 'undefined' && !audioManager) {
+                 audioManager = new AudioManager();
+            }
+            
+            gameEngine = new GameEngine();
+            game = new SurvivalGame();
+            storyEngine = new StoryEngine(game);
+            
+            document.getElementById('story-next-btn').onclick = () => storyEngine.nextChapter();
+            
+            // Bind do botão de Skill mobile
+            const qBtn = document.querySelector('.control-skill');
+            if(qBtn) {
+                qBtn.addEventListener('touchstart', (e) => { e.preventDefault(); game.keys['q'] = true; });
+                qBtn.addEventListener('touchend', (e) => { e.preventDefault(); game.keys['q'] = false; });
+            }
+        };
+    </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ class PixelRenderer {
     static drawSprite(ctx, e, isPlayer) {
         if (!e || typeof e.x !== 'number') return;
         
+        // Decorações
         if (e.type === 'decoration') { 
             if (e.style === 'cactus') this.drawCactus(ctx, e);
             else if (e.style === 'crystal') this.drawCrystal(ctx, e);
@@ -11,6 +12,8 @@ class PixelRenderer {
             else this.drawTree(ctx, e); 
             return; 
         }
+        
+        // Projéteis
         if (e.type === 'projectile') { this.drawProjectile(ctx, e); return; }
 
         const scale = e.scale || 1;
@@ -36,26 +39,29 @@ class PixelRenderer {
             ctx.beginPath(); ctx.arc(0, -15, 25, 0, Math.PI*2); ctx.stroke();
         }
 
+        // Flash de Dano
         if (e.justHit) { ctx.globalAlpha = 0.7; ctx.fillStyle = '#fff'; }
 
+        // Desenho do Personagem
         if (isPlayer) this.drawHumanoid(ctx, e, true, breathe);
         else this.drawMonster(ctx, e, breathe);
 
         ctx.restore();
 
-        // Barra de Vida
+        // Barra de Vida (Inimigos)
         if (e.maxHp && !isPlayer) {
             const hpPct = Math.max(0, e.currentHp/e.maxHp);
-            const yOffset = -60 * scale;
+            const yOffset = -55 * scale;
             ctx.fillStyle = '#000'; ctx.fillRect(e.x-20, e.y+yOffset, 40, 6);
             ctx.fillStyle = e.isBoss?'#e74c3c':(e.isMiniBoss?'#f1c40f':'#ff4757');
             ctx.fillRect(e.x-19, e.y+yOffset+1, 38*hpPct, 4);
+            // Nível
             ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center';
             ctx.fillText(`Lv.${level}`, e.x, e.y+yOffset-2);
         }
     }
 
-    // Desenha o Jogador (Heroico)
+    // === VISUAL JOGADOR ===
     static drawHumanoid(ctx, e, isPlayer, animY) {
         const color = e.class.color;
         const skinColor = '#ffccaa';
@@ -64,42 +70,34 @@ class PixelRenderer {
         const armorColor = level >= 10 ? '#f1c40f' : (level >= 5 ? '#95a5a6' : color);
         const facingX = e.facing ? e.facing.x : 1;
         
+        // Animação de andar
         const isMoving = (Math.abs(e.vx||0) > 0.1 || Math.abs(e.vy||0) > 0.1);
         const walk = isMoving ? Math.sin(Date.now() / 100) * 3 : 0;
         
         // Pernas
         ctx.fillStyle = pantsColor;
-        ctx.fillRect(-6, -5, 4, 12 + walk); 
-        ctx.fillRect(2, -5, 4, 12 - walk); 
+        ctx.fillRect(-6, -5, 4, 12 + walk); ctx.fillRect(2, -5, 4, 12 - walk); 
 
         ctx.translate(0, -14 + animY); 
-        
-        // Capa (atrás)
-        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9, -2, 18, 16); 
-        
-        // Torso
-        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); 
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9, -2, 18, 16); // Capa
+        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); // Torso
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-8, 10, 16, 4); // Cinto
+        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); // Cabeça
 
-        // Cabeça
-        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); 
-
-        // Capacete
-        if (level >= 5) { 
+        if (level >= 5) { // Capacete
             ctx.fillStyle = level >= 10 ? '#f1c40f' : '#7f8c8d'; 
             ctx.fillRect(-8, -14, 16, 6); ctx.fillRect(-8, -14, 4, 14); 
             if(facingX < 0) ctx.fillRect(4, -14, 4, 14); 
         }
 
-        // Olhos
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#000'; // Olhos
         const eyeOffset = facingX > 0 ? 2 : -2;
         ctx.fillRect(-2 + eyeOffset, -8, 2, 2); ctx.fillRect(2 + eyeOffset, -8, 2, 2);
 
-        // ARMA (Desenhada POR ÚLTIMO para ficar na frente)
         this.drawWeapon(ctx, e, true);
     }
 
+    // === VISUAL MONSTROS ===
     static drawMonster(ctx, e, animY) {
         const shape = e.shape || 'default';
         const facingX = e.vx >= 0 ? 1 : -1;
@@ -111,40 +109,44 @@ class PixelRenderer {
             ctx.translate(0, -10 + animY);
             ctx.fillStyle = e.color; ctx.fillRect(-8, 0, 16, 12); 
             ctx.fillStyle = '#27ae60'; ctx.fillRect(-10, -10, 20, 12);
-            ctx.fillStyle = '#fff'; ctx.fillRect(facingX > 0 ? 2 : -8, -6, 3, 3); // Olho
-        } else if (shape === 'skeleton') {
+            ctx.fillStyle = '#fff'; ctx.fillRect(facingX > 0 ? 2 : -8, -6, 3, 3);
+        } 
+        else if (shape === 'skeleton') {
             ctx.fillStyle = '#dfe6e9';
             ctx.fillRect(-5, -5, 2, 15 + walk); ctx.fillRect(3, -5, 2, 15 - walk);
             ctx.translate(0, -15 + animY);
             ctx.fillRect(-6, 0, 12, 12); ctx.fillRect(-5, -12, 10, 10);
             ctx.fillStyle = '#000'; ctx.fillRect(facingX > 0 ? 1 : -4, -8, 2, 2);
-        } else if (shape === 'brute') {
+        } 
+        else if (shape === 'brute') { // Orcs, Yetis
             ctx.fillStyle = '#2d3436';
             ctx.fillRect(-10, -5, 8, 15 + walk); ctx.fillRect(2, -5, 8, 15 - walk);
             ctx.translate(0, -20 + animY);
             ctx.fillStyle = e.color; ctx.fillRect(-15, -5, 30, 25);
             ctx.fillStyle = '#cd6133'; ctx.fillRect(-10, -18, 20, 15);
             ctx.fillStyle = '#fff'; ctx.fillRect(-5, -8, 3, 4); ctx.fillRect(2, -8, 3, 4);
-        } else if (shape === 'ghost') {
+        } 
+        else if (shape === 'ghost') { // Espectros
             ctx.translate(0, -20 + Math.sin(Date.now()/300)*5);
             ctx.fillStyle = e.color; ctx.globalAlpha = 0.7;
             ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill(); 
             ctx.fillRect(-15, 0, 30, 20); ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#00f'; ctx.fillRect(-5, -5, 4, 4); ctx.fillRect(3, -5, 4, 4);
-        } else if (shape === 'human') {
+        } 
+        else if (shape === 'human') { // Bandidos
             ctx.fillStyle = '#555';
             ctx.fillRect(-6, -5, 4, 12 + walk); ctx.fillRect(2, -5, 4, 12 - walk);
             ctx.translate(0, -14 + animY);
             ctx.fillStyle = e.color; ctx.fillRect(-8, 0, 16, 14);
             ctx.fillStyle = '#ffccaa'; ctx.fillRect(-7, -12, 14, 12);
-            ctx.fillStyle = '#000'; ctx.fillRect(facingX > 0 ? 2 : -6, -6, 3, 3); // Bandana/Olho
-        } else {
+            ctx.fillStyle = '#000'; ctx.fillRect(facingX > 0 ? 2 : -6, -6, 3, 3);
+        }
+        else { // Bestas (Lobo/Aranha)
             ctx.translate(0, -10); ctx.fillStyle = e.color;
             ctx.beginPath(); ctx.ellipse(0, 0, 15, 10, 0, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#fff'; ctx.fillRect(facingX>0?5:-10, -5, 3, 3);
         }
         
-        // Arma do monstro
         this.drawWeapon(ctx, e, false);
     }
 
@@ -153,21 +155,19 @@ class PixelRenderer {
         ctx.save();
         const weaponType = isPlayer ? e.class.weapon : e.weapon;
         
-        // Posiciona a arma mais à frente e na mão
-        ctx.translate(14, 0); 
+        // Posiciona arma na mão
+        ctx.translate(12, 5); 
         
-        // Animação de ataque
         if (e.justHit || (isPlayer && window.game && window.game.spacePressed)) {
             ctx.rotate(Math.sin(Date.now()/50)); 
         } else {
-            // Idle pose
-             ctx.rotate(-0.2);
+             ctx.rotate(-0.2); // Posição de descanso
         }
 
         if (weaponType === 'sword' || weaponType === 'dagger') {
-            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-2, -14, 4, 14); // Lâmina
-            ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, 0, 4, 8); // Cabo
-            ctx.fillStyle = '#f1c40f'; ctx.fillRect(-4, -2, 8, 2); // Guarda
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-2, -14, 4, 14); 
+            ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, 0, 4, 8);
+            ctx.fillStyle = '#f1c40f'; ctx.fillRect(-4, -2, 8, 2); 
         } else if (weaponType === 'axe') {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, -10, 4, 20); 
             ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, -8, 10, 0, Math.PI, true); ctx.fill(); 
@@ -175,7 +175,7 @@ class PixelRenderer {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, -15, 4, 30); 
             ctx.fillStyle = e.class ? e.class.color : e.color; 
             ctx.beginPath(); ctx.arc(0, -15, 6, 0, Math.PI*2); ctx.fill(); 
-            ctx.shadowBlur = 5; ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 8; ctx.shadowColor = ctx.fillStyle;
         } else if (weaponType === 'bow') {
             ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, 0, 12, -Math.PI/2, Math.PI/2); ctx.stroke(); 
@@ -184,22 +184,50 @@ class PixelRenderer {
         ctx.restore();
     }
 
+    // === DESENHO DE PROJÉTEIS (Variados) ===
     static drawProjectile(ctx, p) {
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.rotate(Math.atan2(p.vy, p.vx));
-        ctx.fillStyle = p.color;
-        if (p.style === 'arrow') {
-            ctx.fillRect(-10, -1, 20, 2);
-            ctx.fillStyle = '#fff'; ctx.fillRect(-10, -2, 4, 4);
-        } else {
-            ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 10; ctx.shadowColor = p.color;
+        
+        if (p.style === 'leaf') {
+            ctx.rotate(Date.now() / 100);
+            ctx.fillStyle = '#2ecc71'; 
+            ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+        } 
+        else {
+            // Rotaciona na direção do movimento
+            ctx.rotate(Math.atan2(p.vy, p.vx));
+            
+            if (p.style === 'arrow') {
+                ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-10, -1, 20, 2); // Haste
+                ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.moveTo(10, -3); ctx.lineTo(16, 0); ctx.lineTo(10, 3); ctx.fill(); // Ponta
+                ctx.fillStyle = '#fff'; ctx.fillRect(-10, -3, 4, 6); // Pena
+            } 
+            else if (p.style === 'magic') {
+                const pulse = 1 + Math.sin(Date.now()/100) * 0.2;
+                ctx.scale(pulse, pulse);
+                ctx.fillStyle = p.color; 
+                ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 15; ctx.shadowColor = p.color;
+            }
+            else if (p.style === 'bone') {
+                ctx.rotate(Date.now() / 50);
+                ctx.fillStyle = '#ecf0f1';
+                ctx.fillRect(-8, -2, 16, 4);
+                ctx.beginPath(); ctx.arc(-8, -3, 3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(-8, 3, 3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(8, -3, 3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(8, 3, 3, 0, Math.PI*2); ctx.fill();
+            }
+            else { 
+                // Padrão
+                ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill(); 
+            }
         }
         ctx.restore();
     }
 
-    // BIOMAS (Simplificados para não ocupar espaço, mantidos iguais)
+    // BIOMAS
     static drawTree(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='#5d4037'; ctx.fillRect(-6,-15,12,20); ctx.fillStyle='#2d6a4f'; ctx.beginPath(); ctx.moveTo(0,-55); ctx.lineTo(-20,-15); ctx.lineTo(20,-15); ctx.fill(); ctx.restore(); }
     static drawTwistedTree(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='#2d3436'; ctx.fillRect(-5,-20,10,25); ctx.fillStyle='#636e72'; ctx.beginPath(); ctx.arc(0,-25,15,0,Math.PI*2); ctx.fill(); ctx.restore(); }
     static drawCactus(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0,0,15,6,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#27ae60'; ctx.fillRect(-8,-40,16,45); ctx.fillRect(-16,-25,8,8); ctx.fillRect(8,-20,8,8); ctx.restore(); }
@@ -294,7 +322,7 @@ class SurvivalGame {
             div.innerHTML = `<div style="font-size:3rem">${c.icon}</div><div style="color:${c.color}; font-weight:bold;">${c.name}</div><div style="font-size:0.6rem; margin:10px 0;">${c.description}</div><div style="font-size:0.7rem">❤️${c.baseHp} ⚔️${c.baseDamage}</div>`;
             div.onclick = () => {
                 gameEngine.createPlayer(c);
-                this.player = gameEngine.player; // Link direto
+                this.player = gameEngine.player;
                 this.abilitySystem = new AbilitySystem(gameEngine.player); 
                 this.enterBiome(GAME_DATA.biomes[0].id);
                 this.showScreen('game-screen');
@@ -317,7 +345,6 @@ class SurvivalGame {
             this.decorations.push({ x: Math.random()*2400-1200, y: Math.random()*1800-900, type: 'decoration', style: decoType, scale: 0.9 + Math.random()*0.3, collisionRadius: 15 });
         }
         
-        // Spawn inicial
         const initialCount = biome.initialEnemies || 5;
         for(let i=0; i<initialCount; i++) this.spawnEnemy();
 
@@ -332,15 +359,12 @@ class SurvivalGame {
     spawnEnemy(forcedType = null, isMiniBoss = false, isBoss = false) {
         if (!this.currentBiomeId || !gameEngine.player) return false;
         const biome = GAME_DATA.biomes.find(b=>b.id===this.currentBiomeId);
-        
-        // Nível inimigo sobe a cada 10 kills (junto com elite)
         const diff = 1 + Math.floor(gameEngine.biomeKills / 10); 
 
         let data;
         if(isBoss) data = GAME_DATA.bosses.find(b=>b.id===biome.boss);
         else if(forcedType) data = GAME_DATA.enemies.find(e=>e.id===forcedType);
         else {
-            // Pega inimigo aleatório da lista do bioma
             const randId = biome.enemies[Math.floor(Math.random()*biome.enemies.length)];
             data = GAME_DATA.enemies.find(e=>e.id===randId);
         }
@@ -371,17 +395,14 @@ class SurvivalGame {
 
     checkSpawnEvents() {
         const kills = gameEngine.biomeKills;
-        // BOSS aos 50
         if(kills >= 50 && !this.bossActive) {
-            this.gameObjects = this.gameObjects.filter(e => e.isBoss); // Limpa área
+            this.gameObjects = this.gameObjects.filter(e => e.isBoss);
             if(this.spawnEnemy(null, false, true)) this.bossActive = true; 
             return;
         }
-        // ELITE a cada 10
         if(kills > 0 && kills % 10 === 0 && kills < 50 && !this.miniBossSpawned) {
             this.miniBossSpawned = true; 
             const biome = GAME_DATA.biomes.find(b=>b.id===this.currentBiomeId);
-            // Spawna o primeiro inimigo da lista como elite (geralmente é o mais forte comum)
             this.spawnEnemy(biome.enemies[0], true, false);
             this.showFloatingText("ELITE CHEGOU!", gameEngine.player.x, gameEngine.player.y-100, '#f1c40f');
             setTimeout(() => this.miniBossSpawned = false, 5000);
@@ -405,8 +426,6 @@ class SurvivalGame {
                 if(e.isBoss) {
                     this.showFloatingText("VITÓRIA!", gameEngine.player.x, gameEngine.player.y, '#0f0');
                     if(this.audioManager) this.audioManager.play('level_up');
-                    
-                    // Mostra história de vitória e DEPOIS muda de fase
                     setTimeout(() => {
                         if(this.storyEngine) {
                             this.storyEngine.showVictoryStory(this.currentBiomeId, () => {
@@ -430,7 +449,6 @@ class SurvivalGame {
              return;
         }
         const nextBiome = GAME_DATA.biomes[this.currentBiomeIndex];
-        // Mostra intro do próximo mapa
         if(this.storyEngine) {
              this.storyEngine.showBiomeStory(nextBiome.id, () => {
                   this.enterBiome(nextBiome.id);
@@ -454,20 +472,17 @@ class SurvivalGame {
         
         p.vx = dx; p.vy = dy;
         
-        // CORREÇÃO DE MIRA DIAGONAL
+        // === CORREÇÃO DE MIRA ===
         if (dx !== 0 || dy !== 0) {
-            // Se está movendo, atualiza mira
             const len = Math.hypot(dx, dy);
             p.facing = { x: dx/len, y: dy/len };
         } else if(!p.facing) {
             p.facing = {x: 1, y: 0};
         }
 
-        // Movimento
+        // MOVIMENTO + COLISÃO
         if(dx !== 0 || dy !== 0) {
-            const len = Math.hypot(dx,dy); 
-            const moveX = (dx/len)*p.speed*dt; 
-            const moveY = (dy/len)*p.speed*dt;
+            const len = Math.hypot(dx,dy); const moveX = (dx/len)*p.speed*dt; const moveY = (dy/len)*p.speed*dt;
             let canMoveX = true; let nextX = p.x + moveX;
             for(let t of this.decorations) { if(this.checkRectCollision(nextX, p.y, t)) { canMoveX = false; break; } }
             if(canMoveX) p.x += moveX;
@@ -482,13 +497,12 @@ class SurvivalGame {
         if(this.keys[' '] && !this.spacePressed) { this.spacePressed=true; this.handlePlayerAttack(); }
         if(!this.keys[' ']) this.spacePressed=false;
 
-        // Projéteis
+        // PROJÉTEIS
         this.projectiles = this.projectiles.filter(proj => {
             proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.life -= dt;
             if(proj.fromPlayer) {
                 const enemies = [...this.gameObjects];
                 for(let enemy of enemies) {
-                    // Hitbox aumentada
                     if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < 40 + (enemy.scale||1)*10) {
                         const res = gameEngine.playerAttack(enemy);
                         const mult = this.comboSystem.getMultiplier();
@@ -501,7 +515,7 @@ class SurvivalGame {
                     }
                 }
             } else {
-                if(Math.hypot(proj.x - p.x, proj.y - p.y) < 20) {
+                if(Math.hypot(proj.x - p.x, proj.y - p.y) < 25) {
                     const dmg = gameEngine.enemyAttack({damage: 15}); 
                     this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
                     if(this.audioManager) this.audioManager.play('hit_normal');
@@ -512,7 +526,7 @@ class SurvivalGame {
             return proj.life > 0;
         });
 
-        // Inimigos
+        // INIMIGOS
         const enemies = [...this.gameObjects];
         const now = performance.now();
         enemies.forEach(e => {
@@ -527,12 +541,19 @@ class SurvivalGame {
             } else { e.vx = 0; e.vy = 0; }
 
             if (isRanged) {
-                // Reduzida velocidade de ataque dos inimigos
                 if (dist < 500 && now - (e.lastShot||0) > 2500) {
                      e.lastShot = now;
                      const angle = Math.atan2(p.y - e.y, p.x - e.x);
-                     // Projétil mais lento (180 de velocidade)
-                     this.projectiles.push({ type: 'projectile', fromPlayer: false, x: e.x, y: e.y, vx: Math.cos(angle)*180, vy: Math.sin(angle)*180, life: 3, color: '#ff4757', style: 'magic' });
+                     // Define estilo do projétil inimigo
+                     let pStyle = 'magic';
+                     if(e.weapon === 'bow' || e.id === 'skeleton') pStyle = 'arrow';
+                     if(e.id === 'skeleton') pStyle = 'bone';
+                     
+                     this.projectiles.push({ 
+                        type: 'projectile', fromPlayer: false, x: e.x, y: e.y, 
+                        vx: Math.cos(angle)*180, vy: Math.sin(angle)*180, 
+                        life: 3, color: '#ff4757', style: pStyle 
+                     });
                 }
             } else {
                 if(dist < 35 + (e.scale||1)*10 && now-e.lastAttack > 1000) {
@@ -554,35 +575,35 @@ class SurvivalGame {
         return (px > t.x - tW && px < t.x + tW && py > t.y - tH && py < t.y + tH);
     }
 
+    // === SISTEMA DE ATAQUE CORRIGIDO ===
     handlePlayerAttack() {
         const p = gameEngine.player;
-        // Vetor de tiro base
-        let vecX = p.facing.x; 
-        let vecY = p.facing.y;
+        // 1. Sistema de Kiting (Atirar correndo)
+        let shotDirX = p.facing.x; 
+        let shotDirY = p.facing.y;
 
-        // KITING: Se ranged e andando, inverte
         const isMoving = (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1);
-        if (p.class.type === 'ranged' && isMoving) {
-             vecX = -p.vx;
-             vecY = -p.vy;
-             // Normaliza vetor invertido
-             const l = Math.hypot(vecX, vecY);
-             if(l>0) { vecX/=l; vecY/=l; }
+        if (p.class.type === 'ranged' && isMoving) { 
+             // Inverte direção para kiting
+             shotDirX = -p.vx; 
+             shotDirY = -p.vy;
+             const l = Math.hypot(shotDirX, shotDirY);
+             if(l>0) { shotDirX /= l; shotDirY /= l; }
         }
 
+        // 2. Executa o ataque
         if (p.class.type === 'ranged') {
             this.projectiles.push({ 
                 type: 'projectile', fromPlayer: true, x: p.x, y: p.y - 15, 
-                vx: vecX * 500, vy: vecY * 500, 
+                vx: shotDirX * 500, vy: shotDirY * 500, 
                 life: 0.8, color: p.class.color, style: p.class.projectile 
             });
             if(this.audioManager) this.audioManager.play('player_attack');
         } else {
+            // MELEE (Ataque Circular 360º)
             let hit = false;
             [...this.gameObjects].forEach(e => {
                 const dist = Math.hypot(p.x-e.x, p.y-e.y);
-                // Hitbox melee generosa (120px) e sem restrição de ângulo (ataque circular)
-                // + considera tamanho do inimigo
                 const reach = 120 + (e.scale||1)*20;
                 
                 if(dist < reach) { 
@@ -620,11 +641,14 @@ class SurvivalGame {
         for(let x=startX; x<cx+this.canvas.width; x+=gridSize) { this.ctx.moveTo(x,cy); this.ctx.lineTo(x,cy+this.canvas.height); }
         for(let y=startY; y<cy+this.canvas.height; y+=gridSize) { this.ctx.moveTo(cx,y); this.ctx.lineTo(cx+this.canvas.width,y); }
         this.ctx.stroke();
+
         const all = [...this.gameObjects, p, ...this.decorations, ...this.projectiles];
         all.sort((a,b)=>(a.y||0)-(b.y||0));
         all.forEach(e=>PixelRenderer.drawSprite(this.ctx,e,e===p));
         this.floatingTexts.forEach(t=>{ this.ctx.globalAlpha=t.life; this.ctx.fillStyle='#000'; this.ctx.font='bold 16px Arial'; this.ctx.fillText(t.text,t.x+1,t.y+1); this.ctx.fillStyle=t.color; this.ctx.fillText(t.text,t.x,t.y); });
         this.ctx.restore();
+
+        // HUD
         this.ctx.globalAlpha=1;
         this.ctx.fillStyle='rgba(0,0,0,0.7)'; this.ctx.strokeStyle='#fff'; this.ctx.lineWidth=2;
         this.ctx.roundRect ? this.ctx.roundRect(10,10,300,100,10) : this.ctx.fillRect(10,10,300,100); this.ctx.fill(); this.ctx.stroke();
@@ -633,9 +657,14 @@ class SurvivalGame {
         this.ctx.fillStyle='#333'; this.ctx.fillRect(25,80,270,10); this.ctx.fillStyle='#e74c3c'; this.ctx.fillRect(25,80,270*(Math.max(0, p.currentHp)/p.maxHp),10); 
         if(this.abilitySystem) this.abilitySystem.renderCooldown(this.ctx, this.canvas.width - 60, 20, 40);
         if(this.comboSystem) this.comboSystem.render(this.ctx, 25, 140);
+        
+        // PAUSE OVERLAY
         if(this.paused) {
-            this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
-            this.ctx.fillStyle = '#fff'; this.ctx.font = '30px "Press Start 2P"'; this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '30px "Press Start 2P"';
+            this.ctx.textAlign = 'center';
             this.ctx.fillText("PAUSADO", this.canvas.width/2, this.canvas.height/2);
         }
     }

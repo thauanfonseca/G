@@ -14,9 +14,9 @@
 
         <div id="menu-screen" class="screen active">
             <h1>CRÔNICAS DE ELANDOR</h1>
-            <button class="btn btn--primary" onclick="storyEngine.startNewGameWithIntro()">Nova Jornada</button>
+            <button class="btn btn--primary" onclick="if(storyEngine) storyEngine.startNewGameWithIntro()">Nova Jornada</button>
             <br><br>
-            <button class="btn" onclick="saveSystem.loadGame()">Carregar Jogo</button>
+            <button class="btn" onclick="if(saveSystem) saveSystem.loadGame()">Carregar Jogo</button>
         </div>
 
         <div id="story-screen" class="screen">
@@ -49,32 +49,44 @@
     </div>
 
     <script src="gameData.js"></script>
-    <script src="audioManager.js"></script> <script src="comboSystem.js"></script> <script src="gameEngine.js"></script>
-    <script src="abilities.js"></script>    <script src="saveSystem.js"></script>   <script src="storyEngine.js"></script>
+    <script src="audioManager.js"></script>
+    <script src="comboSystem.js"></script>
+    <script src="gameEngine.js"></script>
+    <script src="abilities.js"></script>
+    <script src="saveSystem.js"></script>
+    <script src="storyEngine.js"></script>
     <script src="survivalGame.js"></script>
 
     <script>
-        // Inicialização Global
-        let game, gameEngine, storyEngine, audioManager;
+        // Variáveis globais para o jogo e história
+        // OBS: gameEngine e audioManager já foram criados nos seus arquivos (são globais)
+        let game; 
+        let storyEngine; 
         
         window.onload = () => {
-            // Verifica se audioManager já foi criado no arquivo dele, senão cria
-            if (typeof AudioManager !== 'undefined' && !audioManager) {
-                 audioManager = new AudioManager();
-            }
-            
-            gameEngine = new GameEngine();
+            // 1. Inicializa o Jogo (Canvas, Loop, etc)
             game = new SurvivalGame();
+            
+            // 2. Inicializa a História (passando a instância do jogo)
             storyEngine = new StoryEngine(game);
             
-            document.getElementById('story-next-btn').onclick = () => storyEngine.nextChapter();
+            // 3. Configurações adicionais
+            // Garante que o botão de continuar da história funcione caso o StoryEngine não tenha configurado
+            const nextBtn = document.getElementById('story-next-btn');
+            if (nextBtn) {
+                nextBtn.onclick = () => {
+                    if(storyEngine) storyEngine.nextChapter();
+                };
+            }
             
-            // Bind do botão de Skill mobile
+            // 4. Controles Mobile (Skill Q)
             const qBtn = document.querySelector('.control-skill');
-            if(qBtn) {
+            if(qBtn && game) {
                 qBtn.addEventListener('touchstart', (e) => { e.preventDefault(); game.keys['q'] = true; });
                 qBtn.addEventListener('touchend', (e) => { e.preventDefault(); game.keys['q'] = false; });
             }
+
+            console.log("✅ Jogo Inicializado com Sucesso!");
         };
     </script>
 </body>

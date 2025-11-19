@@ -16,6 +16,11 @@ class StoryEngine {
     }
 
     showPrologue() {
+        if (!GAME_DATA || !GAME_DATA.story || !GAME_DATA.story.intro) {
+            console.error("Dados da história ausentes em gameData.js!");
+            this.game.showClassSelection(); // Pula direto se houver erro
+            return;
+        }
         const story = GAME_DATA.story.intro;
         this.showStoryScreen(story.title, story.text, () => {
             this.progress.introSeen = true;
@@ -24,18 +29,32 @@ class StoryEngine {
     }
 
     showBiomeStory(biomeId, onComplete) {
-        const story = GAME_DATA.story[biomeId];
-        if(story) {
-            this.showStoryScreen(story.title, story.text, onComplete);
+        // Se não houver texto específico para o bioma na seção story, procura dentro do bioma
+        const biomeData = GAME_DATA.biomes.find(b => b.id === biomeId);
+        
+        let title = "";
+        let text = "";
+
+        if (biomeData && biomeData.victoryText) {
+            title = `Vitória em ${biomeData.name}`;
+            text = biomeData.victoryText;
+        } else if (GAME_DATA.story[biomeId]) {
+            title = GAME_DATA.story[biomeId].title;
+            text = GAME_DATA.story[biomeId].text;
+        }
+
+        if (text) {
+            this.showStoryScreen(title, text, onComplete);
         } else {
-            onComplete(); // Se não tiver história, pula
+            onComplete();
         }
     }
     
     showEpilogue() {
+        if (!GAME_DATA.story.epilogue) return;
         const story = GAME_DATA.story.epilogue;
         this.showStoryScreen(story.title, story.text, () => {
-            location.reload(); // Fim do jogo
+            location.reload(); 
         });
     }
 
@@ -50,7 +69,6 @@ class StoryEngine {
     }
 
     nextChapter() {
-        // Fallback
         this.game.showClassSelection();
     }
 }

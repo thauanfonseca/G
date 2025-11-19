@@ -22,64 +22,79 @@ const GAME_DATA = {
   ],
 
   bosses: [
-      { id: 'orc_king', name: 'Rei Orc', hp: 800, damage: 35, defense: 15, xpReward: 500, color: '#e74c3c', weapon: 'axe', type: 'melee', shape: 'brute' },
-      { id: 'ancient_wolf', name: 'Lobo Ancestral', hp: 900, damage: 40, defense: 10, xpReward: 700, color: '#dfe6e9', weapon: 'sword', type: 'melee' }, 
-      { id: 'spider_queen', name: 'Rainha Aranha', hp: 1100, damage: 45, defense: 20, xpReward: 800, color: '#8e44ad', weapon: 'dagger', type: 'melee' },
-      { id: 'deep_troll', name: 'Troll Profundo', hp: 1400, damage: 60, defense: 30, xpReward: 1000, color: '#2d3436', weapon: 'axe', type: 'melee', shape: 'brute' },
-      { id: 'maedron', name: 'Maedron', hp: 2500, damage: 80, defense: 50, xpReward: 5000, color: '#000', weapon: 'staff', type: 'ranged', shape: 'ghost' }
+      { id: 'orc_king', name: 'Rei Orc', hp: 600, damage: 35, defense: 15, xpReward: 500, color: '#e74c3c', weapon: 'axe', type: 'melee', shape: 'brute' },
+      { id: 'ancient_wolf', name: 'Lobo Ancestral', hp: 700, damage: 40, defense: 10, xpReward: 700, color: '#dfe6e9', weapon: 'sword', type: 'melee' }, 
+      { id: 'spider_queen', name: 'Rainha Aranha', hp: 800, damage: 45, defense: 20, xpReward: 800, color: '#8e44ad', weapon: 'dagger', type: 'melee' },
+      { id: 'deep_troll', name: 'Troll Profundo', hp: 1000, damage: 60, defense: 30, xpReward: 1000, color: '#2d3436', weapon: 'axe', type: 'melee', shape: 'brute' },
+      { id: 'maedron', name: 'Maedron', hp: 2000, damage: 60, defense: 50, xpReward: 5000, color: '#000', weapon: 'staff', type: 'ranged', shape: 'ghost' }
   ],
 
   biomes: [
     {
       id: 'aldervann',
       name: 'Aldervann',
-      bgColor: '#1e272e', decoration: 'tree',
-      enemies: ['goblin', 'wolf'], boss: 'orc_king',
+      bgColor: '#1e272e', 
+      decoration: 'tree', 
+      enemies: ['goblin', 'wolf'], 
+      boss: 'orc_king',
+      initialEnemies: 6,
       introText: "Aldervann: Os campos escuros onde os goblins espreitam.",
       victoryText: "Com o Rei Orc derrotado, a marca em sua mão brilha. Os cavaleiros de Aldervann agora veem você como uma esperança."
     },
     {
       id: 'varundar',
       name: 'Varundar',
-      bgColor: '#636e72', decoration: 'crystal',
-      enemies: ['ice_wolf', 'yeti'], boss: 'ancient_wolf',
+      bgColor: '#636e72', 
+      decoration: 'crystal', 
+      enemies: ['ice_wolf', 'yeti'], 
+      boss: 'ancient_wolf',
+      initialEnemies: 7,
       introText: "Varundar: O frio congela até a alma.",
       victoryText: "O Lobo Ancestral cai e o vento se acalma. Eldric avisa: 'Maedron tentou puxar energia daqui'. O Umbral observa você."
     },
     {
       id: 'mirvalia',
       name: 'Mirvalia',
-      bgColor: '#d35400', decoration: 'cactus',
-      enemies: ['skeleton', 'scorpion'], boss: 'spider_queen',
+      bgColor: '#d35400', 
+      decoration: 'cactus', 
+      enemies: ['skeleton', 'scorpion'], 
+      boss: 'spider_queen',
+      initialEnemies: 8,
       introText: "Mirvalia: O deserto vermelho.",
       victoryText: "A Aranha Rainha foi banida. Nas ruínas, inscrições repetem o nome MAEDRON. Ele esteve aqui antes do Eclipse."
     },
     {
       id: 'sylwood',
       name: 'Sylwood',
-      bgColor: '#006266', decoration: 'twisted_tree',
-      enemies: ['corrupted_ent', 'spirit'], boss: 'deep_troll',
+      bgColor: '#006266', 
+      decoration: 'twisted_tree', 
+      enemies: ['corrupted_ent', 'spirit'], 
+      boss: 'deep_troll',
+      initialEnemies: 8,
       introText: "Sylwood: A floresta que sussurra.",
       victoryText: "A floresta se cura. A Rainha Lyris sussurra: 'Eltharis deixará de ser um reino e se tornará um portal'. Você deve ir para lá."
     },
     {
       id: 'eltharis',
       name: 'Eltharis',
-      bgColor: '#2c3e50', decoration: 'ruins',
-      enemies: ['golem', 'specter'], boss: 'maedron',
+      bgColor: '#2c3e50', 
+      decoration: 'ruins', 
+      enemies: ['golem', 'specter'], 
+      boss: 'maedron',
+      initialEnemies: 10,
       introText: "Eltharis: A cidade das ruínas arcanas.",
       victoryText: "Maedron caiu. O Umbral recua. Você se tornou a lenda viva de Elandor, o Portador do Último Eco."
     }
   ],
 
-  lore: {
-    prologue: {
-      title: "O Último Eco",
-      text: "Numa vila modesta, criaturas sombrias atacaram. Tentando escapar, você toca um cristal antigo e uma luz intensa envolve seu corpo.<br><br>O velho Eldric aparece: 'O Eco escolheu você. Elandor inteiro vai sentir isso... alguns vão querer sua ajuda. Outros, a sua morte.'<br><br>Sua jornada começa agora."
-    },
-    epilogue: {
-      title: "O Destino de Elandor",
-      text: "A batalha terminou. O poder do Eco pulsa em sua mão. Você salvou o mundo, mas o poder mudou você para sempre.<br><br>As Crônicas de Elandor agora contam a sua história.<br><br>Obrigado por jogar!"
-    }
+  story: {
+      intro: {
+          title: "O Último Eco",
+          text: "Numa vila modesta, criaturas sombrias atacaram. Tentando escapar, você toca um cristal antigo e uma luz intensa envolve seu corpo.<br><br>O velho Eldric aparece: 'O Eco escolheu você. Elandor inteiro vai sentir isso... alguns vão querer sua ajuda. Outros, a sua morte.'<br><br>Sua jornada começa agora."
+      },
+      epilogue: {
+          title: "O Destino de Elandor",
+          text: "A batalha terminou. O poder do Eco pulsa em sua mão. Você salvou o mundo, mas o poder mudou você para sempre.<br><br>As Crônicas de Elandor agora contam a sua história.<br><br>Obrigado por jogar!"
+      }
   }
 };

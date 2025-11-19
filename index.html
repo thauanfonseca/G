@@ -14,8 +14,10 @@
 
         <div id="menu-screen" class="screen active">
             <h1>CRÔNICAS DE ELANDOR</h1>
-            <button class="btn btn--primary" onclick="if(storyEngine) storyEngine.startNewGameWithIntro()">Nova Jornada</button>
+            <button class="btn btn--primary" onclick="if(window.storyEngine) window.storyEngine.startNewGameWithIntro()">Nova Jornada</button>
             <br><br>
+            <button class="btn" onclick="SaveSystem.loadGame()">Carregar Jogo</button>
+            <br>
             <input type="file" id="import-file" style="display:none" onchange="SaveSystem.importSave(this.files[0]).then(res=>{if(res) alert('Save importado! Tente carregar agora.')})">
             <button class="btn" onclick="document.getElementById('import-file').click()">Importar Save</button>
         </div>
@@ -35,7 +37,7 @@
             <h2>PAUSADO</h2>
             <button class="btn" onclick="game.togglePause()">Continuar</button>
             <button class="btn" onclick="SaveSystem.saveGame(game, 'Player', 1); alert('Salvo no navegador!')">Salvar Rápido</button>
-            <button class="btn" onclick="SaveSystem.exportSave(1)">Baixar Save (Arquivo)</button>
+            <button class="btn" onclick="SaveSystem.exportSave(1)">Baixar Save</button>
             <button class="btn" style="border-color:#d63031" onclick="location.reload()">Sair</button>
         </div>
 
@@ -72,23 +74,37 @@
         let storyEngine; 
         
         window.onload = () => {
-            game = new SurvivalGame();
-            storyEngine = new StoryEngine(game);
-            
-            const nextBtn = document.getElementById('story-next-btn');
-            if (nextBtn) {
-                nextBtn.onclick = () => {
-                    if(storyEngine) storyEngine.nextChapter();
-                };
-            }
-            
-            const qBtn = document.querySelector('.control-skill');
-            if(qBtn && game) {
-                qBtn.addEventListener('touchstart', (e) => { e.preventDefault(); game.keys['q'] = true; });
-                qBtn.addEventListener('touchend', (e) => { e.preventDefault(); game.keys['q'] = false; });
-            }
+            try {
+                // Inicializa jogo
+                game = new SurvivalGame();
+                
+                // Inicializa sistema de história e conecta ao jogo
+                storyEngine = new StoryEngine(game);
+                game.storyEngine = storyEngine; // Conecta de volta para que o jogo possa chamar a história
+                
+                // Expõe para o HTML
+                window.storyEngine = storyEngine;
+                window.game = game;
 
-            console.log("✅ Jogo Inicializado!");
+                // Configura botões
+                const nextBtn = document.getElementById('story-next-btn');
+                if (nextBtn) {
+                    nextBtn.onclick = () => {
+                        if(storyEngine) storyEngine.nextChapter();
+                    };
+                }
+                
+                const qBtn = document.querySelector('.control-skill');
+                if(qBtn && game) {
+                    qBtn.addEventListener('touchstart', (e) => { e.preventDefault(); game.keys['q'] = true; });
+                    qBtn.addEventListener('touchend', (e) => { e.preventDefault(); game.keys['q'] = false; });
+                }
+
+                console.log("✅ Jogo Inicializado com Sucesso!");
+            } catch (e) {
+                console.error("❌ Erro na inicialização:", e);
+                alert("Erro ao iniciar o jogo. Verifique se todos os arquivos (especialmente gameData.js) estão atualizados.");
+            }
         };
     </script>
 </body>

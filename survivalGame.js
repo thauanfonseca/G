@@ -2,15 +2,11 @@
 class PixelRenderer {
     static drawSprite(ctx, e, isPlayer) {
         if (!e || typeof e.x !== 'number') return;
-        
-        // Decorações
         if (e.type === 'decoration') { 
             if (e.style === 'cactus') this.drawCactus(ctx, e);
             else this.drawTree(ctx, e); 
             return; 
         }
-        
-        // Projéteis
         if (e.type === 'projectile') { this.drawProjectile(ctx, e); return; }
 
         const scale = e.scale || 1;
@@ -23,8 +19,7 @@ class PixelRenderer {
         ctx.scale(scale, scale);
 
         // Sombra
-        ctx.fillStyle = 'rgba(0,0,0,0.3)'; 
-        ctx.beginPath(); ctx.ellipse(0, 5, 14, 6, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 5, 14, 6, 0, 0, Math.PI*2); ctx.fill();
 
         // Auras
         if (e.isBoss) {
@@ -35,7 +30,6 @@ class PixelRenderer {
             ctx.strokeStyle = '#00b894'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, -15, 25, 0, Math.PI*2); ctx.stroke();
         }
-
         if (e.justHit) { ctx.globalAlpha = 0.7; ctx.fillStyle = '#fff'; }
 
         this.drawHumanoid(ctx, e, isPlayer, breathe);
@@ -59,7 +53,6 @@ class PixelRenderer {
         const skinColor = '#ffccaa';
         const armorColor = level >= 10 ? '#f1c40f' : (level >= 5 ? '#95a5a6' : color); 
         const pantsColor = '#2d3436';
-
         const facingX = e.facing ? e.facing.x : (e.vx > 0 ? 1 : -1);
         
         const isMoving = (Math.abs(e.vx||0) > 0.1 || Math.abs(e.vy||0) > 0.1);
@@ -72,19 +65,16 @@ class PixelRenderer {
         ctx.translate(0, -14 + animY); 
         ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); // Torso
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-8, 10, 16, 4); // Cinto
-
         ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); // Cabeça
 
-        if (level >= 5) { // Capacete
+        if (level >= 5) { 
             ctx.fillStyle = level >= 10 ? '#f1c40f' : '#7f8c8d'; 
             ctx.fillRect(-8, -14, 16, 6); ctx.fillRect(-8, -14, 4, 14); 
             if(facingX < 0) ctx.fillRect(4, -14, 4, 14); 
         }
-
         ctx.fillStyle = '#000'; // Olhos
         const eyeOffset = facingX > 0 ? 2 : -2;
         ctx.fillRect(-2 + eyeOffset, -8, 2, 2); ctx.fillRect(2 + eyeOffset, -8, 2, 2);
-
         this.drawWeapon(ctx, e, isPlayer);
     }
 
@@ -94,9 +84,8 @@ class PixelRenderer {
         const level = e.level || 1;
         ctx.translate(10, 5); 
         if (e.justHit || (isPlayer && window.game && window.game.spacePressed)) ctx.rotate(Math.sin(Date.now()/50)); 
-
         const wColor = level >= 8 ? '#e1b12c' : '#bdc3c7';
-
+        
         if (weaponType === 'sword' || weaponType === 'dagger') {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, 0, 4, 8); 
             ctx.fillStyle = wColor; ctx.fillRect(-2, -14, 4, 14); 
@@ -126,32 +115,25 @@ class PixelRenderer {
             ctx.beginPath(); ctx.moveTo(10, -3); ctx.lineTo(15, 0); ctx.lineTo(10, 3); ctx.fill(); 
         } else if (p.style === 'magic') {
             ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
-        } else { // Leaf or other
-            ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2); ctx.fill();
-        }
+        } else { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI*2); ctx.fill(); }
         ctx.restore();
     }
 
-    // Cenário com Efeito de Profundidade
     static drawTree(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
-        // Sombra da árvore
-        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0, 0, 20, 8, 0, 0, Math.PI*2); ctx.fill();
-        // Tronco
-        ctx.fillStyle = '#5d4037'; ctx.fillRect(-8, -20, 16, 25);
-        // Copa
+        ctx.fillStyle = '#5d4037'; ctx.fillRect(-6, -15, 12, 20);
         ctx.fillStyle = '#2d6a4f'; 
-        ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(-25, -20); ctx.lineTo(25, -20); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(0, -50); ctx.lineTo(-20, -10); ctx.lineTo(20, -10); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, -55); ctx.lineTo(-20, -15); ctx.lineTo(20, -15); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(-16, -10); ctx.lineTo(16, -10); ctx.fill();
         ctx.restore();
     }
     static drawCactus(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
         ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0, 0, 15, 6, 0, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#27ae60'; 
-        ctx.fillRect(-10, -45, 20, 50); 
-        ctx.fillRect(-20, -30, 10, 8); ctx.fillRect(-20, -40, 6, 10); 
-        ctx.fillRect(10, -25, 10, 8); ctx.fillRect(14, -35, 6, 10);
+        ctx.fillRect(-8, -40, 16, 45); 
+        ctx.fillRect(-16, -25, 8, 8); ctx.fillRect(-16, -35, 6, 10); 
+        ctx.fillRect(8, -20, 8, 8); ctx.fillRect(10, -30, 6, 10);
         ctx.restore();
     }
 }
@@ -187,10 +169,7 @@ class SurvivalGame {
     resizeCanvas() { this.canvas.width = innerWidth; this.canvas.height = innerHeight; }
     
     setupInputs() {
-        addEventListener('keydown', e => { 
-            this.keys[e.key.toLowerCase()] = true; 
-            if(e.code==='Space') e.preventDefault(); 
-        });
+        addEventListener('keydown', e => { this.keys[e.key.toLowerCase()] = true; if(e.code==='Space') e.preventDefault(); });
         addEventListener('keyup', e => this.keys[e.key.toLowerCase()] = false);
     }
     
@@ -208,7 +187,6 @@ class SurvivalGame {
     showScreen(id) { 
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
         const controls = document.getElementById('controls');
-        
         if(id === 'game-screen') {
             controls.classList.add('visible');
             if(this.audioManager) this.audioManager.playMusic('aldervann'); 
@@ -225,12 +203,7 @@ class SurvivalGame {
         GAME_DATA.classes.forEach(c => {
             const div = document.createElement('div');
             div.className = 'class-card'; div.style.borderColor = c.color;
-            div.innerHTML = `
-                <div style="font-size:3rem">${c.icon}</div>
-                <div style="color:${c.color}; font-weight:bold;">${c.name}</div>
-                <div style="font-size:0.6rem; margin:10px 0;">${c.description}</div>
-                <div style="font-size:0.7rem">❤️${c.baseHp} ⚔️${c.baseDamage}</div>
-            `;
+            div.innerHTML = `<div style="font-size:3rem">${c.icon}</div><div style="color:${c.color}; font-weight:bold;">${c.name}</div><div style="font-size:0.6rem; margin:10px 0;">${c.description}</div><div style="font-size:0.7rem">❤️${c.baseHp} ⚔️${c.baseDamage}</div>`;
             div.onclick = () => {
                 gameEngine.createPlayer(c);
                 this.abilitySystem = new AbilitySystem(gameEngine.player); 
@@ -246,34 +219,17 @@ class SurvivalGame {
     enterBiome(id) {
         this.currentBiomeId = id;
         const biome = GAME_DATA.biomes.find(b => b.id === id);
-        
         this.gameObjects = []; this.decorations = []; this.projectiles = [];
-        this.bossActive = false;
-        this.miniBossSpawned = false;
-        this.miniBossDefeated = false;
+        this.bossActive = false; this.miniBossSpawned = false; this.miniBossDefeated = false;
         gameEngine.biomeKills = 0; 
 
         const decoType = biome.decoration || 'tree';
-        // Menos decorações para melhorar performance
-        for(let i=0; i<40; i++) {
-            this.decorations.push({ 
-                x: Math.random()*2400-1200, 
-                y: Math.random()*1800-900, 
-                type: 'decoration', 
-                style: decoType,
-                scale: 0.8 + Math.random()*0.4,
-                // Caixa de Colisão (Largura e Altura) na base
-                width: 20,
-                height: 15
-            });
+        for(let i=0; i<50; i++) {
+            this.decorations.push({ x: Math.random()*2400-1200, y: Math.random()*1800-900, type: 'decoration', style: decoType, scale: 0.9 + Math.random()*0.3, collisionRadius: 15 });
         }
-
         this.spawnEnemy(); 
         if (this.spawnInterval) clearInterval(this.spawnInterval);
-        this.spawnInterval = setInterval(() => { 
-            if(!this.bossActive && this.gameObjects.length < 15) this.spawnEnemy(); 
-        }, 1500);
-        
+        this.spawnInterval = setInterval(() => { if(!this.bossActive && this.gameObjects.length < 15) this.spawnEnemy(); }, 1500);
         this.showFloatingText(`Mundo: ${biome.name}`, gameEngine.player.x, gameEngine.player.y-100, biome.color);
     }
 
@@ -281,10 +237,8 @@ class SurvivalGame {
         this.currentBiomeIndex++;
         if(this.currentBiomeIndex >= GAME_DATA.biomes.length) this.currentBiomeIndex = 0;
         const nextBiome = GAME_DATA.biomes[this.currentBiomeIndex];
-        
         const overlay = document.getElementById('damage-overlay');
         if(overlay) { overlay.style.background = '#000'; overlay.style.opacity = 1; }
-
         setTimeout(() => {
             this.enterBiome(nextBiome.id);
             gameEngine.player.x = 0; gameEngine.player.y = 0; 
@@ -293,7 +247,7 @@ class SurvivalGame {
     }
 
     spawnEnemy(forcedType = null, isMiniBoss = false, isBoss = false) {
-        if (!this.currentBiomeId || !gameEngine.player) return;
+        if (!this.currentBiomeId || !gameEngine.player) return false;
         const biome = GAME_DATA.biomes.find(b=>b.id===this.currentBiomeId);
         const diff = 1 + Math.floor(gameEngine.biomeKills / 3); 
 
@@ -302,28 +256,17 @@ class SurvivalGame {
         else if(forcedType) data = GAME_DATA.enemies.find(e=>e.id===forcedType);
         else data = GAME_DATA.enemies.find(e=>e.id===biome.enemies[Math.floor(Math.random()*biome.enemies.length)]);
 
-        if(!data) return;
+        if(!data) { console.warn("Enemy data missing for", forcedType || "random"); return false; }
         const enemy = gameEngine.createEnemy(data, isBoss, isMiniBoss, diff);
         
-        let safe = false;
-        let attempts = 0;
-        
+        let safe = false; let attempts = 0;
         while(!safe && attempts < 40) { 
-            const angle = Math.random()*Math.PI*2;
-            const dist = isBoss ? 600 : (450 + Math.random()*400);
-            enemy.x = gameEngine.player.x + Math.cos(angle)*dist;
-            enemy.y = gameEngine.player.y + Math.sin(angle)*dist;
-            
+            const angle = Math.random()*Math.PI*2; const dist = isBoss ? 600 : (450 + Math.random()*400);
+            enemy.x = gameEngine.player.x + Math.cos(angle)*dist; enemy.y = gameEngine.player.y + Math.sin(angle)*dist;
             let colliding = false;
-            for(let d of this.decorations) {
-                if(Math.hypot(enemy.x-d.x, enemy.y-d.y) < 40) {
-                    colliding = true; break;
-                }
-            }
-            if(!colliding) safe = true;
-            attempts++;
+            for(let d of this.decorations) { if(Math.hypot(enemy.x-d.x, enemy.y-d.y) < 40) { colliding = true; break; } }
+            if(!colliding) safe = true; attempts++;
         }
-        
         enemy.vx = 0; enemy.vy = 0;
         this.gameObjects.push(enemy);
 
@@ -331,14 +274,16 @@ class SurvivalGame {
             this.showFloatingText("BOSS FINAL!", gameEngine.player.x, gameEngine.player.y-150, '#f00');
             if(this.audioManager) this.audioManager.play('ability_berserker'); 
         }
+        return true;
     }
 
     checkSpawnEvents() {
         const kills = gameEngine.biomeKills;
         if(kills >= 10 && this.miniBossDefeated && !this.bossActive) {
-            this.bossActive = true;
             this.gameObjects = []; 
-            this.spawnEnemy(null, false, true);
+            if(this.spawnEnemy(null, false, true)) {
+                this.bossActive = true; // Só ativa se spawnar com sucesso
+            }
             return;
         }
         if(kills >= 5 && !this.miniBossSpawned && !this.bossActive) {
@@ -350,13 +295,11 @@ class SurvivalGame {
 
     update(dt) {
         const p = gameEngine.player; if(!p) return;
-        
         let dx = 0, dy = 0;
         if(this.keys['w']||this.keys['arrowup']) dy = -1;
         if(this.keys['s']||this.keys['arrowdown']) dy = 1;
         if(this.keys['a']||this.keys['arrowleft']) dx = -1;
         if(this.keys['d']||this.keys['arrowright']) dx = 1;
-        
         p.vx = dx; p.vy = dy;
 
         if (dx !== 0 || dy !== 0) {
@@ -365,52 +308,28 @@ class SurvivalGame {
             if(l > 0) { p.facing.x /= l; p.facing.y /= l; }
         } else if(!p.facing) p.facing = {x: 0, y: 1};
 
-        // MOVIMENTO + COLISÃO RETANGULAR (Bounding Box)
         if(dx !== 0 || dy !== 0) {
-            const len = Math.hypot(dx,dy);
-            const moveX = (dx/len)*p.speed*dt;
-            const moveY = (dy/len)*p.speed*dt;
-
-            // Tenta mover X
-            let canMoveX = true;
-            let nextX = p.x + moveX;
-            for(let t of this.decorations) {
-                if(this.checkRectCollision(nextX, p.y, t)) { canMoveX = false; break; }
-            }
+            const len = Math.hypot(dx,dy); const moveX = (dx/len)*p.speed*dt; const moveY = (dy/len)*p.speed*dt;
+            let canMoveX = true; let nextX = p.x + moveX;
+            for(let t of this.decorations) { if(this.checkRectCollision(nextX, p.y, t)) { canMoveX = false; break; } }
             if(canMoveX) p.x += moveX;
-
-            // Tenta mover Y
-            let canMoveY = true;
-            let nextY = p.y + moveY;
-            for(let t of this.decorations) {
-                if(this.checkRectCollision(p.x, nextY, t)) { canMoveY = false; break; }
-            }
+            let canMoveY = true; let nextY = p.y + moveY;
+            for(let t of this.decorations) { if(this.checkRectCollision(p.x, nextY, t)) { canMoveY = false; break; } }
             if(canMoveY) p.y += moveY;
         }
         
-        // ABILITIES
-        if(this.keys['q'] && this.abilitySystem) {
-            if(!this.qPressed) {
-                this.qPressed = true;
-                this.abilitySystem.useAbility(this); 
-            }
-        } else { this.qPressed = false; }
+        if(this.keys['q'] && this.abilitySystem && !this.qPressed) { this.qPressed = true; this.abilitySystem.useAbility(this); } 
+        else if(!this.keys['q']) { this.qPressed = false; }
 
-        // ATAQUE
-        if(this.keys[' '] && !this.spacePressed) { 
-            this.spacePressed=true; 
-            this.handlePlayerAttack(); 
-        }
+        if(this.keys[' '] && !this.spacePressed) { this.spacePressed=true; this.handlePlayerAttack(); }
         if(!this.keys[' ']) this.spacePressed=false;
 
-        // PROJÉTEIS
         this.projectiles = this.projectiles.filter(proj => {
-            proj.x += proj.vx * dt;
-            proj.y += proj.vy * dt;
-            proj.life -= dt;
-            
+            proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.life -= dt;
             if(proj.fromPlayer) {
-                for(let enemy of this.gameObjects) {
+                // ITERAÇÃO SEGURA: Cria cópia do array
+                const enemies = [...this.gameObjects];
+                for(let enemy of enemies) {
                     const hitSize = 35;
                     if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < hitSize) {
                         const res = gameEngine.playerAttack(enemy);
@@ -418,7 +337,6 @@ class SurvivalGame {
                         const mult = this.comboSystem.getMultiplier();
                         const finalDmg = Math.floor(res.damage * mult);
                         enemy.currentHp -= (finalDmg - res.damage); 
-                        
                         this.showFloatingText(finalDmg, enemy.x, enemy.y-40, mult > 1 ? '#f1c40f':'#fff');
                         if(this.audioManager) this.audioManager.play('hit_normal');
                         this.checkEnemyDeath(enemy);
@@ -429,22 +347,16 @@ class SurvivalGame {
             return proj.life > 0;
         });
 
-        // INIMIGOS
+        // ITERAÇÃO SEGURA INIMIGOS
+        const enemies = [...this.gameObjects];
         const now = performance.now();
-        this.gameObjects.forEach(e => {
-            const dist = Math.hypot(p.x-e.x, p.y-e.y);
-            const stop = 30;
-            
+        enemies.forEach(e => {
+            const dist = Math.hypot(p.x-e.x, p.y-e.y); const stop = 25;
             if(dist > stop) {
                 const speed = e.speed * (e.justHit ? 0.5 : 1); 
-                e.vx = (p.x-e.x)/dist; 
-                e.vy = (p.y-e.y)/dist;
-                e.x += e.vx * speed * dt;
-                e.y += e.vy * speed * dt;
-            } else {
-                e.vx = 0; e.vy = 0;
-            }
-
+                e.vx = (p.x-e.x)/dist; e.vy = (p.y-e.y)/dist;
+                e.x += e.vx * speed * dt; e.y += e.vy * speed * dt;
+            } else { e.vx = 0; e.vy = 0; }
             if(dist < stop+10 && now-e.lastAttack > 1000) {
                 const dmg = gameEngine.enemyAttack(e);
                 this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
@@ -454,63 +366,41 @@ class SurvivalGame {
             }
         });
 
-        // Limpeza e Otimização
         this.floatingTexts = this.floatingTexts.filter(t=>t.life>0);
         this.floatingTexts.forEach(t=>{ t.y-=30*dt; t.life-=dt; });
     }
 
-    // Colisão Retangular (AABB)
     checkRectCollision(px, py, t) {
-        // Caixa do jogador (pés)
-        const pW = 16; const pH = 8;
-        // Caixa da árvore (base)
-        const tW = t.width || 20; const tH = t.height || 15;
-        
-        return (px > t.x - tW && px < t.x + tW &&
-                py > t.y - tH && py < t.y + tH);
+        const pW = 16; const pH = 8; const tW = t.width || 20; const tH = t.height || 15;
+        return (px > t.x - tW && px < t.x + tW && py > t.y - tH && py < t.y + tH);
     }
 
     handlePlayerAttack() {
         const p = gameEngine.player;
-        let shotDirX = p.facing.x;
-        let shotDirY = p.facing.y;
-        
-        // Se parado, assume direção padrão
+        let shotDirX = p.facing.x; let shotDirY = p.facing.y;
         if (shotDirX === 0 && shotDirY === 0) shotDirX = 1;
-
-        // === MECÂNICA DE KITING (Atirar para trás) ===
-        // Se a classe é ranged E o jogador está se movendo...
-        if (p.class.type === 'ranged' && (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1)) {
-             // Inverte a direção do tiro
-             shotDirX = -shotDirX;
-             shotDirY = -shotDirY;
-        }
+        // Kiting
+        if (p.class.type === 'ranged' && (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1)) { shotDirX = -shotDirX; shotDirY = -shotDirY; }
 
         if (p.class.type === 'ranged') {
             this.projectiles.push({
-                type: 'projectile', fromPlayer: true,
-                x: p.x, y: p.y - 15,
-                vx: shotDirX * 500,
-                vy: shotDirY * 500,
-                life: 0.8, color: p.class.color, style: p.class.projectile
+                type: 'projectile', fromPlayer: true, x: p.x, y: p.y - 15,
+                vx: shotDirX * 500, vy: shotDirY * 500, life: 0.8, color: p.class.color, style: p.class.projectile
             });
             if(this.audioManager) this.audioManager.play('player_attack');
         } else {
             let hit = false;
-            this.gameObjects.forEach(e => {
+            // Iteração Segura
+            [...this.gameObjects].forEach(e => {
                 const dist = Math.hypot(p.x-e.x, p.y-e.y);
-                const dx = e.x - p.x;
-                const dy = e.y - p.y;
-                // Melee ataca sempre para onde está olhando (sem kiting invertido)
+                const dx = e.x - p.x; const dy = e.y - p.y;
                 const dot = (dx * p.facing.x) + (dy * p.facing.y);
-
                 if(dist < 90 && dot > 0) { 
                     const res = gameEngine.playerAttack(e);
                     const combo = this.comboSystem.recordHit(res.damage);
                     const mult = this.comboSystem.getMultiplier();
                     const finalDmg = Math.floor(res.damage * mult);
                     e.currentHp -= (finalDmg - res.damage);
-                    
                     this.showFloatingText(finalDmg, e.x, e.y-40, mult>1?'#f1c40f':'#fff');
                     this.checkEnemyDeath(e);
                     hit = true;
@@ -527,19 +417,16 @@ class SurvivalGame {
                 this.gameObjects.splice(index, 1);
                 gameEngine.biomeKills++;
                 const xp = gameEngine.calculateXpGain(e);
-                
                 if(gameEngine.gainExp(xp)) {
                     this.showFloatingText("LEVEL UP!", gameEngine.player.x, gameEngine.player.y-80, '#FFD700');
                     if(this.audioManager) this.audioManager.play('level_up');
                 } else {
                     this.showFloatingText(`+${xp} XP`, e.x, e.y-60, '#0f0');
                 }
-                
                 if(e.isMiniBoss) {
                     this.miniBossDefeated = true;
                     this.showFloatingText("CAMINHO DO BOSS ABERTO!", gameEngine.player.x, gameEngine.player.y-150, '#f1c40f');
                 }
-
                 if(e.isBoss) {
                     this.showFloatingText("VITÓRIA!", gameEngine.player.x, gameEngine.player.y, '#0f0');
                     if(this.audioManager) this.audioManager.play('level_up');
@@ -563,66 +450,38 @@ class SurvivalGame {
         const currentBiome = GAME_DATA.biomes.find(b => b.id === this.currentBiomeId);
         this.ctx.fillStyle = currentBiome ? (currentBiome.bgColor || '#1e272e') : '#1e272e';
         this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
-        
         const p = gameEngine.player; if(!p) return;
-        let cx=p.x-this.canvas.width/2; let cy=p.y-this.canvas.height/2;
-        if(isNaN(cx)) cx=0;
+        let cx=p.x-this.canvas.width/2; let cy=p.y-this.canvas.height/2; if(isNaN(cx)) cx=0;
+        this.ctx.save(); this.ctx.translate(-cx,-cy);
         
-        this.ctx.save(); 
-        this.ctx.translate(-cx,-cy);
-        
-        // Grid
-        this.ctx.strokeStyle='rgba(255,255,255,0.03)'; this.ctx.lineWidth=2;
-        this.ctx.beginPath();
-        const gridSize = 100;
-        const startX = Math.floor(cx/gridSize)*gridSize;
-        const startY = Math.floor(cy/gridSize)*gridSize;
+        this.ctx.strokeStyle='rgba(255,255,255,0.03)'; this.ctx.lineWidth=2; this.ctx.beginPath();
+        const gridSize = 100; const startX = Math.floor(cx/gridSize)*gridSize; const startY = Math.floor(cy/gridSize)*gridSize;
         for(let x=startX; x<cx+this.canvas.width; x+=gridSize) { this.ctx.moveTo(x,cy); this.ctx.lineTo(x,cy+this.canvas.height); }
         for(let y=startY; y<cy+this.canvas.height; y+=gridSize) { this.ctx.moveTo(cx,y); this.ctx.lineTo(cx+this.canvas.width,y); }
         this.ctx.stroke();
 
-        // Z-Order Sorting
         const all = [...this.gameObjects, p, ...this.decorations, ...this.projectiles];
-        all.sort((a,b)=>{
-            const yA = a.y || 0;
-            const yB = b.y || 0;
-            return yA - yB;
-        });
-        
+        all.sort((a,b)=>(a.y||0)-(b.y||0));
         all.forEach(e=>PixelRenderer.drawSprite(this.ctx,e,e===p));
         
         this.floatingTexts.forEach(t=>{ 
-            this.ctx.globalAlpha=t.life; 
-            this.ctx.fillStyle='#000'; 
-            this.ctx.font='bold 16px Arial'; 
-            this.ctx.fillText(t.text,t.x+1,t.y+1); 
-            this.ctx.fillStyle=t.color; 
-            this.ctx.fillText(t.text,t.x,t.y); 
+            this.ctx.globalAlpha=t.life; this.ctx.fillStyle='#000'; this.ctx.font='bold 16px Arial'; 
+            this.ctx.fillText(t.text,t.x+1,t.y+1); this.ctx.fillStyle=t.color; this.ctx.fillText(t.text,t.x,t.y); 
         });
         this.ctx.restore();
 
-        // HUD
         this.ctx.globalAlpha=1;
         this.ctx.fillStyle='rgba(0,0,0,0.7)'; this.ctx.strokeStyle='#fff'; this.ctx.lineWidth=2;
         this.ctx.roundRect ? this.ctx.roundRect(10,10,300,100,10) : this.ctx.fillRect(10,10,300,100);
         this.ctx.fill(); this.ctx.stroke();
-        
         this.ctx.fillStyle='#fff'; this.ctx.font='18px "Press Start 2P", cursive';
         this.ctx.fillText(p.class.name, 25, 40);
-        
         this.ctx.font='12px "Press Start 2P", cursive';
         this.ctx.fillText(`Lv.${p.level} XP:${Math.floor(p.exp)}/${p.expToNextLevel}`, 25, 65);
-
         this.ctx.fillStyle='#333'; this.ctx.fillRect(25,80,270,10); 
         this.ctx.fillStyle='#e74c3c'; this.ctx.fillRect(25,80,270*(Math.max(0, p.currentHp)/p.maxHp),10); 
-        
-        if(this.abilitySystem) {
-            this.abilitySystem.renderCooldown(this.ctx, this.canvas.width - 60, 20, 40);
-        }
-        if(this.comboSystem) {
-            this.comboSystem.render(this.ctx, 25, 140);
-        }
+        if(this.abilitySystem) this.abilitySystem.renderCooldown(this.ctx, this.canvas.width - 60, 20, 40);
+        if(this.comboSystem) this.comboSystem.render(this.ctx, 25, 140);
     }
-    
     loop() { this.update(0.016); this.draw(); requestAnimationFrame(()=>this.loop()); }
 }

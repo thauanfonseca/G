@@ -23,14 +23,22 @@ const GAME_DATA = {
     { id: 'specter', name: 'Espectro', hp: 70, damage: 45, defense: 5, xpReward: 60, color: '#00cec9', type: 'magic' }
   ],
 
+  bosses: [
+      { id: 'orc_king', name: 'Rei Orc', hp: 600, damage: 35, defense: 15, xpReward: 500, color: '#e74c3c', weapon: 'axe' },
+      { id: 'spider_queen', name: 'Rainha Aranha', hp: 800, damage: 45, defense: 20, xpReward: 800, color: '#8e44ad', weapon: 'dagger' },
+      { id: 'ancient_wolf', name: 'Lobo Ancestral', hp: 700, damage: 40, defense: 10, xpReward: 700, color: '#dfe6e9', weapon: 'sword' },
+      { id: 'deep_troll', name: 'Troll das Profundezas', hp: 1000, damage: 60, defense: 30, xpReward: 1000, color: '#2d3436', weapon: 'axe' },
+      { id: 'maedron', name: 'Maedron O Sombrio', hp: 2000, damage: 80, defense: 50, xpReward: 5000, color: '#000', weapon: 'staff' }
+  ],
+
   biomes: [
     {
       id: 'aldervann',
       name: 'Aldervann',
       bgColor: '#1e272e', 
       enemies: ['goblin', 'wolf'], 
-      boss: 'goblin_king',
-      initialEnemies: 6, // ADICIONADO: Define quantos inimigos nascem
+      boss: 'orc_king', // CORRIGIDO: Era 'goblin_king'
+      initialEnemies: 6, 
       introText: "Aldervann: Os campos escuros onde os goblins espreitam."
     },
     {

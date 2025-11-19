@@ -1,4 +1,4 @@
-// ================== RENDERIZADOR AVANÇADO (Pixel Art Procedural) ==================
+// ================== RENDERIZADOR AVANÇADO ==================
 class PixelRenderer {
     static drawSprite(ctx, e, isPlayer) {
         if (!e || typeof e.x !== 'number') return;
@@ -36,15 +36,10 @@ class PixelRenderer {
             ctx.beginPath(); ctx.arc(0, -15, 25, 0, Math.PI*2); ctx.stroke();
         }
 
-        // Flash de Dano
         if (e.justHit) { ctx.globalAlpha = 0.7; ctx.fillStyle = '#fff'; }
 
-        // DESENHO DIFERENCIADO
-        if (isPlayer) {
-            this.drawHumanoid(ctx, e, true, breathe);
-        } else {
-            this.drawMonster(ctx, e, breathe);
-        }
+        if (isPlayer) this.drawHumanoid(ctx, e, true, breathe);
+        else this.drawMonster(ctx, e, breathe);
 
         ctx.restore();
 
@@ -60,42 +55,33 @@ class PixelRenderer {
         }
     }
 
-    // Desenha o Jogador (Heroico)
     static drawHumanoid(ctx, e, isPlayer, animY) {
         const color = e.class.color;
         const skinColor = '#ffccaa';
         const pantsColor = '#2d3436';
         const level = e.level;
         const armorColor = level >= 10 ? '#f1c40f' : (level >= 5 ? '#95a5a6' : color);
-
         const facingX = e.facing ? e.facing.x : 1;
+        
+        // Animação de andar
         const isMoving = (Math.abs(e.vx||0) > 0.1 || Math.abs(e.vy||0) > 0.1);
         const walk = isMoving ? Math.sin(Date.now() / 100) * 3 : 0;
         
-        // Pernas
         ctx.fillStyle = pantsColor;
-        ctx.fillRect(-6, -5, 4, 12 + walk); 
-        ctx.fillRect(2, -5, 4, 12 - walk); 
+        ctx.fillRect(-6, -5, 4, 12 + walk); ctx.fillRect(2, -5, 4, 12 - walk); 
 
         ctx.translate(0, -14 + animY); 
-        // Capa (só player)
-        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9, -2, 18, 16); 
-        
-        // Torso
-        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); 
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9, -2, 18, 16); // Capa
+        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); // Torso
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-8, 10, 16, 4); // Cinto
+        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); // Cabeça
 
-        // Cabeça
-        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); 
-
-        // Capacete
         if (level >= 5) { 
             ctx.fillStyle = level >= 10 ? '#f1c40f' : '#7f8c8d'; 
             ctx.fillRect(-8, -14, 16, 6); ctx.fillRect(-8, -14, 4, 14); 
             if(facingX < 0) ctx.fillRect(4, -14, 4, 14); 
         }
 
-        // Olhos
         ctx.fillStyle = '#000';
         const eyeOffset = facingX > 0 ? 2 : -2;
         ctx.fillRect(-2 + eyeOffset, -8, 2, 2); ctx.fillRect(2 + eyeOffset, -8, 2, 2);
@@ -103,70 +89,44 @@ class PixelRenderer {
         this.drawWeapon(ctx, e, true);
     }
 
-    // Desenha Monstros (Assustadores)
     static drawMonster(ctx, e, animY) {
         const shape = e.shape || 'default';
-        const color = e.color || '#555';
         const vx = e.vx || 0;
         const facingX = vx >= 0 ? 1 : -1;
         const walk = Math.sin(Date.now() / 150) * 3;
 
         if (shape === 'goblin') {
-            // Pequeno, curvado, verde
-            ctx.fillStyle = '#27ae60'; // Pele verde
-            ctx.fillRect(-6, -5, 4, 10 + walk); ctx.fillRect(2, -5, 4, 10 - walk); // Pernas curtas
-            ctx.translate(0, -10 + animY);
-            ctx.fillStyle = e.color; // Roupa
-            ctx.fillRect(-8, 0, 16, 12); 
             ctx.fillStyle = '#27ae60'; 
-            ctx.fillRect(-10, -10, 20, 12); // Cabeça larga
-            ctx.fillStyle = '#fff'; // Olhos grandes
-            ctx.fillRect(facingX > 0 ? 2 : -8, -6, 3, 3);
-            ctx.fillStyle = '#c0392b'; // Boca
-            ctx.fillRect(facingX > 0 ? 2 : -8, -2, 4, 1);
-        } 
-        else if (shape === 'skeleton') {
-            // Magro, ossudo
+            ctx.fillRect(-6, -5, 4, 10 + walk); ctx.fillRect(2, -5, 4, 10 - walk);
+            ctx.translate(0, -10 + animY);
+            ctx.fillStyle = e.color; ctx.fillRect(-8, 0, 16, 12); 
+            ctx.fillStyle = '#27ae60'; ctx.fillRect(-10, -10, 20, 12);
+            ctx.fillStyle = '#fff'; ctx.fillRect(facingX > 0 ? 2 : -8, -6, 3, 3);
+            ctx.fillStyle = '#c0392b'; ctx.fillRect(facingX > 0 ? 2 : -8, -2, 4, 1);
+        } else if (shape === 'skeleton') {
             ctx.fillStyle = '#dfe6e9';
             ctx.fillRect(-5, -5, 2, 15 + walk); ctx.fillRect(3, -5, 2, 15 - walk);
             ctx.translate(0, -15 + animY);
-            ctx.fillRect(-6, 0, 12, 12); // Costelas
-            ctx.fillRect(-5, -12, 10, 10); // Caveira
-            ctx.fillStyle = '#000'; // Olhos vazios
-            ctx.fillRect(facingX > 0 ? 1 : -4, -8, 2, 2);
-        }
-        else if (shape === 'brute') {
-            // Grande, largo (Orcs, Yetis)
+            ctx.fillRect(-6, 0, 12, 12); ctx.fillRect(-5, -12, 10, 10);
+            ctx.fillStyle = '#000'; ctx.fillRect(facingX > 0 ? 1 : -4, -8, 2, 2);
+        } else if (shape === 'brute') {
             ctx.fillStyle = '#2d3436';
             ctx.fillRect(-10, -5, 8, 15 + walk); ctx.fillRect(2, -5, 8, 15 - walk);
             ctx.translate(0, -20 + animY);
-            ctx.fillStyle = e.color; 
-            ctx.fillRect(-15, -5, 30, 25); // Tronco massivo
-            ctx.fillStyle = '#cd6133'; // Pele
-            ctx.fillRect(-10, -18, 20, 15); // Cabeça pequena
-            ctx.fillStyle = '#fff'; // Dentes
-            ctx.fillRect(-5, -8, 3, 4); ctx.fillRect(2, -8, 3, 4);
-        }
-        else if (shape === 'ghost') {
-            // Flutuando
+            ctx.fillStyle = e.color; ctx.fillRect(-15, -5, 30, 25);
+            ctx.fillStyle = '#cd6133'; ctx.fillRect(-10, -18, 20, 15);
+            ctx.fillStyle = '#fff'; ctx.fillRect(-5, -8, 3, 4); ctx.fillRect(2, -8, 3, 4);
+        } else if (shape === 'ghost') {
             ctx.translate(0, -20 + Math.sin(Date.now()/300)*5);
-            ctx.fillStyle = e.color;
-            ctx.globalAlpha = 0.7;
-            ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill(); // Corpo
-            ctx.fillRect(-15, 0, 30, 20);
-            ctx.globalAlpha = 1.0;
-            ctx.fillStyle = '#00f'; // Olhos brilhantes
-            ctx.fillRect(-5, -5, 4, 4); ctx.fillRect(3, -5, 4, 4);
-        }
-        else {
-            // Padrão (Lobo/Aranha - simplificado como blob por enquanto)
-            ctx.translate(0, -10);
-            ctx.fillStyle = e.color;
+            ctx.fillStyle = e.color; ctx.globalAlpha = 0.7;
+            ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillRect(-15, 0, 30, 20); ctx.globalAlpha = 1.0;
+            ctx.fillStyle = '#00f'; ctx.fillRect(-5, -5, 4, 4); ctx.fillRect(3, -5, 4, 4);
+        } else {
+            ctx.translate(0, -10); ctx.fillStyle = e.color;
             ctx.beginPath(); ctx.ellipse(0, 0, 15, 10, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#fff'; // Olhos
-            ctx.fillRect(facingX>0?5:-10, -5, 3, 3);
+            ctx.fillStyle = '#fff'; ctx.fillRect(facingX>0?5:-10, -5, 3, 3);
         }
-
         this.drawWeapon(ctx, e, false);
     }
 
@@ -206,7 +166,6 @@ class PixelRenderer {
         ctx.restore();
     }
 
-    // BIOMAS
     static drawTree(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
         ctx.fillStyle = '#5d4037'; ctx.fillRect(-6, -15, 12, 20);
@@ -221,14 +180,13 @@ class PixelRenderer {
     }
     static drawCactus(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
-        ctx.fillStyle = '#27ae60'; ctx.fillRect(-8, -40, 16, 45); 
-        ctx.fillRect(-16, -25, 8, 8); ctx.fillRect(8, -20, 8, 8);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0, 0, 15, 6, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#27ae60'; ctx.fillRect(-8, -40, 16, 45); ctx.fillRect(-16, -25, 8, 8); ctx.fillRect(8, -20, 8, 8);
         ctx.restore();
     }
     static drawCrystal(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
-        ctx.fillStyle = 'rgba(116, 185, 255, 0.8)'; 
-        ctx.beginPath(); ctx.moveTo(0, -35); ctx.lineTo(10, 0); ctx.lineTo(0, 10); ctx.lineTo(-10, 0); ctx.fill();
+        ctx.fillStyle = 'rgba(116, 185, 255, 0.8)'; ctx.beginPath(); ctx.moveTo(0, -35); ctx.lineTo(10, 0); ctx.lineTo(0, 10); ctx.lineTo(-10, 0); ctx.fill();
         ctx.restore();
     }
     static drawRuins(ctx, e) {
@@ -258,7 +216,7 @@ class SurvivalGame {
         this.bossActive = false; 
         this.miniBossSpawned = false; 
         this.miniBossDefeated = false;
-        this.paused = false; // Novo estado de Pause
+        this.paused = false; 
         
         this.resizeCanvas(); 
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -358,7 +316,6 @@ class SurvivalGame {
     spawnEnemy(forcedType = null, isMiniBoss = false, isBoss = false) {
         if (!this.currentBiomeId || !gameEngine.player) return false;
         const biome = GAME_DATA.biomes.find(b=>b.id===this.currentBiomeId);
-        // Dificuldade aumenta com kills
         const diff = 1 + Math.floor(gameEngine.biomeKills / 3); 
 
         let data;
@@ -389,20 +346,16 @@ class SurvivalGame {
 
     checkSpawnEvents() {
         const kills = gameEngine.biomeKills;
-        // BOSS aos 50 kills
         if(kills >= 50 && !this.bossActive) {
-            // Limpa inimigos menores para focar no boss
             this.gameObjects = this.gameObjects.filter(e => e.isBoss);
             if(this.spawnEnemy(null, false, true)) this.bossActive = true; 
             return;
         }
-        // ELITE a cada 10 kills (10, 20, 30, 40)
         if(kills > 0 && kills % 10 === 0 && kills < 50 && !this.miniBossSpawned) {
-            this.miniBossSpawned = true; // Flag temporária para não spawnar vários
+            this.miniBossSpawned = true; 
             const biome = GAME_DATA.biomes.find(b=>b.id===this.currentBiomeId);
             this.spawnEnemy(biome.enemies[0], true, false);
             this.showFloatingText("ELITE CHEGOU!", gameEngine.player.x, gameEngine.player.y-100, '#f1c40f');
-            // Reseta flag após um tempo para o próximo elite (no próximo múltiplo de 10)
             setTimeout(() => this.miniBossSpawned = false, 5000);
         }
     }
@@ -421,21 +374,21 @@ class SurvivalGame {
                     this.showFloatingText(`+${xp} XP`, e.x, e.y-60, '#0f0');
                 }
                 
-                // Se matar Boss
+                // BOSS MORREU - MOSTRA HISTÓRIA E AVANÇA
                 if(e.isBoss) {
                     this.showFloatingText("VITÓRIA!", gameEngine.player.x, gameEngine.player.y, '#0f0');
                     if(this.audioManager) this.audioManager.play('level_up');
                     
-                    // Pausa e conta história após 3s
                     setTimeout(() => {
-                         const biome = GAME_DATA.biomes.find(b => b.id === this.currentBiomeId);
-                         if(this.storyEngine && biome.victoryText) {
-                             this.storyEngine.showStoryScreen(biome.name + " - Concluído", biome.victoryText, () => {
-                                 this.enterNextBiome();
-                             });
-                         } else {
-                             this.enterNextBiome();
-                         }
+                        const biome = GAME_DATA.biomes.find(b => b.id === this.currentBiomeId);
+                        if(this.storyEngine && biome.victoryText) {
+                            // Chama a tela de história. Quando o usuário clicar em "Continuar", executa enterNextBiome
+                            this.storyEngine.showStoryScreen(biome.name + " - Concluído", biome.victoryText, () => {
+                                this.enterNextBiome();
+                            });
+                        } else {
+                            this.enterNextBiome();
+                        }
                     }, 2000);
                 } else {
                     this.checkSpawnEvents();
@@ -451,16 +404,22 @@ class SurvivalGame {
              return;
         }
         const nextBiome = GAME_DATA.biomes[this.currentBiomeIndex];
-        this.enterBiome(nextBiome.id);
-        gameEngine.player.x = 0; gameEngine.player.y = 0; 
+        // Mostra Intro do próximo mapa
+        if(this.storyEngine && nextBiome.introText) {
+             this.storyEngine.showStoryScreen(nextBiome.name, nextBiome.introText, () => {
+                  this.enterBiome(nextBiome.id);
+                  gameEngine.player.x = 0; gameEngine.player.y = 0; 
+             });
+        } else {
+             this.enterBiome(nextBiome.id);
+             gameEngine.player.x = 0; gameEngine.player.y = 0; 
+        }
     }
 
     update(dt) {
-        if (this.paused || !gameEngine.player) return; // PAUSA
+        if (this.paused || !gameEngine.player) return; 
 
         const p = gameEngine.player;
-        
-        // INPUTS
         let dx = 0, dy = 0;
         if(this.keys['w']||this.keys['arrowup']) dy = -1;
         if(this.keys['s']||this.keys['arrowdown']) dy = 1;
@@ -474,7 +433,6 @@ class SurvivalGame {
             if(l > 0) { p.facing.x /= l; p.facing.y /= l; }
         } else if(!p.facing) p.facing = {x: 0, y: 1};
 
-        // MOVIMENTO + COLISÃO
         if(dx !== 0 || dy !== 0) {
             const len = Math.hypot(dx,dy); const moveX = (dx/len)*p.speed*dt; const moveY = (dy/len)*p.speed*dt;
             let canMoveX = true; let nextX = p.x + moveX;
@@ -485,14 +443,12 @@ class SurvivalGame {
             if(canMoveY) p.y += moveY;
         }
         
-        // AÇÕES
         if(this.keys['q'] && this.abilitySystem && !this.qPressed) { this.qPressed = true; this.abilitySystem.useAbility(this); } 
         else if(!this.keys['q']) { this.qPressed = false; }
 
         if(this.keys[' '] && !this.spacePressed) { this.spacePressed=true; this.handlePlayerAttack(); }
         if(!this.keys[' ']) this.spacePressed=false;
 
-        // PROJÉTEIS
         this.projectiles = this.projectiles.filter(proj => {
             proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.life -= dt;
             if(proj.fromPlayer) {
@@ -521,12 +477,11 @@ class SurvivalGame {
             return proj.life > 0;
         });
 
-        // INIMIGOS
         const enemies = [...this.gameObjects];
         const now = performance.now();
         enemies.forEach(e => {
             const dist = Math.hypot(p.x-e.x, p.y-e.y); 
-            const isRanged = (e.weapon === 'bow' || e.weapon === 'staff');
+            const isRanged = (e.weapon === 'bow' || e.weapon === 'staff' || e.shape === 'ghost');
             const stopDist = isRanged ? 300 : 25;
             
             if(dist > stopDist) {
@@ -536,7 +491,7 @@ class SurvivalGame {
             } else { e.vx = 0; e.vy = 0; }
 
             if (isRanged) {
-                if (dist < 400 && now - (e.lastShot||0) > 2000) {
+                if (dist < 450 && now - (e.lastShot||0) > 2000) {
                      e.lastShot = now;
                      const angle = Math.atan2(p.y - e.y, p.x - e.x);
                      this.projectiles.push({ type: 'projectile', fromPlayer: false, x: e.x, y: e.y, vx: Math.cos(angle)*300, vy: Math.sin(angle)*300, life: 2, color: '#ff4757', style: 'magic' });
@@ -556,16 +511,31 @@ class SurvivalGame {
         this.floatingTexts.forEach(t=>{ t.y-=30*dt; t.life-=dt; });
     }
 
-    // UTILS
     checkRectCollision(px, py, t) {
         const pW = 16; const pH = 8; const tW = t.width || 20; const tH = t.height || 15;
         return (px > t.x - tW && px < t.x + tW && py > t.y - tH && py < t.y + tH);
     }
+    
     handlePlayerAttack() {
         const p = gameEngine.player;
         let shotDirX = p.facing.x; let shotDirY = p.facing.y;
         if (shotDirX === 0 && shotDirY === 0) shotDirX = 1;
-        if (p.class.type === 'ranged' && (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1)) { shotDirX = -shotDirX; shotDirY = -shotDirY; }
+
+        // Kiting Calculation: shoot opposite to movement if moving
+        const isMoving = (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1);
+        if (p.class.type === 'ranged' && isMoving) { 
+            // Invert direction of shoot
+            shotDirX = -p.vx; 
+            shotDirY = -p.vy;
+            // Normalize again
+            const len = Math.hypot(shotDirX, shotDirY);
+            if(len > 0) { shotDirX /= len; shotDirY /= len; }
+        } else if (p.class.type === 'ranged') {
+            // If standing still, use facing
+            shotDirX = p.facing.x;
+            shotDirY = p.facing.y;
+        }
+
         if (p.class.type === 'ranged') {
             this.projectiles.push({ type: 'projectile', fromPlayer: true, x: p.x, y: p.y - 15, vx: shotDirX * 500, vy: shotDirY * 500, life: 0.8, color: p.class.color, style: p.class.projectile });
             if(this.audioManager) this.audioManager.play('player_attack');
@@ -581,6 +551,7 @@ class SurvivalGame {
             if(hit && this.audioManager) this.audioManager.play('hit_critical');
         }
     }
+
     showFloatingText(text, x, y, color) { this.floatingTexts.push({ text, x, y, color, life: 1.0 }); }
     gameOver() { 
         document.getElementById('final-score').innerText = gameEngine.enemiesDefeated; 

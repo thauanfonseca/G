@@ -5,22 +5,29 @@ class StoryEngine {
         this.titleEl = document.getElementById('story-title');
         this.textEl = document.getElementById('story-text');
         this.nextBtn = document.getElementById('story-next-btn');
+        this.currentAction = null; // Armazena o que fazer ao clicar no botão
+        
+        if(this.nextBtn) {
+            this.nextBtn.onclick = () => {
+                if(this.currentAction) {
+                    this.currentAction(); // Executa a função guardada (ex: enterNextBiome)
+                } else {
+                    // Fallback se não houver ação
+                    this.game.showScreen('game-screen');
+                }
+            };
+        }
     }
 
+    showStoryScreen(title, text, onComplete) {
+        this.currentAction = onComplete; // Guarda a função para ser chamada no clique
+        this.game.showScreen('story-screen');
+        if(this.titleEl) this.titleEl.innerHTML = title;
+        if(this.textEl) this.textEl.innerHTML = text;
+    }
+
+    // Início do Jogo
     startNewGameWithIntro() {
-        if (this.progress.introSeen) {
-            this.game.showClassSelection();
-        } else {
-            this.showPrologue();
-        }
-    }
-
-    showPrologue() {
-        if (!GAME_DATA || !GAME_DATA.story || !GAME_DATA.story.intro) {
-            console.error("Dados da história ausentes em gameData.js!");
-            this.game.showClassSelection(); // Pula direto se houver erro
-            return;
-        }
         const story = GAME_DATA.story.intro;
         this.showStoryScreen(story.title, story.text, () => {
             this.progress.introSeen = true;
@@ -28,47 +35,16 @@ class StoryEngine {
         });
     }
 
-    showBiomeStory(biomeId, onComplete) {
-        // Se não houver texto específico para o bioma na seção story, procura dentro do bioma
-        const biomeData = GAME_DATA.biomes.find(b => b.id === biomeId);
-        
-        let title = "";
-        let text = "";
-
-        if (biomeData && biomeData.victoryText) {
-            title = `Vitória em ${biomeData.name}`;
-            text = biomeData.victoryText;
-        } else if (GAME_DATA.story[biomeId]) {
-            title = GAME_DATA.story[biomeId].title;
-            text = GAME_DATA.story[biomeId].text;
-        }
-
-        if (text) {
-            this.showStoryScreen(title, text, onComplete);
-        } else {
-            onComplete();
-        }
-    }
-    
+    // Final do Jogo
     showEpilogue() {
-        if (!GAME_DATA.story.epilogue) return;
         const story = GAME_DATA.story.epilogue;
         this.showStoryScreen(story.title, story.text, () => {
             location.reload(); 
         });
     }
 
-    showStoryScreen(title, text, callback) {
-        this.game.showScreen('story-screen');
-        if(this.titleEl) this.titleEl.innerHTML = title;
-        if(this.textEl) this.textEl.innerHTML = text;
-        
-        if(this.nextBtn) {
-            this.nextBtn.onclick = callback;
-        }
-    }
-
+    // Método legado de compatibilidade, se chamado diretamente
     nextChapter() {
-        this.game.showClassSelection();
+        if(this.currentAction) this.currentAction();
     }
 }

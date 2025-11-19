@@ -25,9 +25,9 @@ class AbilitySystem {
           // Empurra inimigos próximos
           game.gameObjects.forEach(e => {
               const dist = Math.hypot(this.player.x - e.x, this.player.y - e.y);
-              if(dist < 100) {
-                  e.x += (e.x - this.player.x) * 2; // Knockback
-                  e.y += (e.y - this.player.y) * 2;
+              if(dist < 120) {
+                  e.x += (e.x - this.player.x) * 3; // Knockback forte
+                  e.y += (e.y - this.player.y) * 3;
               }
           });
 
@@ -42,9 +42,8 @@ class AbilitySystem {
         duration: 500,
         description: 'Teleporte e Dano',
         effect: (game) => {
-          // Teleporta para o inimigo mais próximo ou avança
           let target = null;
-          let minDist = 400;
+          let minDist = 500;
           
           game.gameObjects.forEach(e => {
               const d = Math.hypot(this.player.x - e.x, this.player.y - e.y);
@@ -53,15 +52,14 @@ class AbilitySystem {
 
           if(target) {
               this.player.x = target.x; 
-              this.player.y = target.y; // Teleporte
-              target.currentHp -= this.player.damage * 3;
+              this.player.y = target.y; 
+              target.currentHp -= this.player.damage * 4;
               game.showFloatingText('CRITICAL!', target.x, target.y - 40, '#ff0000');
           } else {
-              // Se não tem inimigo, dash para frente
               const dx = this.player.facing ? this.player.facing.x : 1;
               const dy = this.player.facing ? this.player.facing.y : 0;
-              this.player.x += dx * 150;
-              this.player.y += dy * 150;
+              this.player.x += dx * 200;
+              this.player.y += dy * 200;
           }
           
           if (typeof audioManager !== 'undefined') audioManager.play('ability_ladino');
@@ -74,15 +72,16 @@ class AbilitySystem {
         duration: 5000,
         description: 'Dano Duplo por 5s',
         effect: (game) => {
-          this.player.damage *= 2;
-          this.player.color = '#ff0000'; // Muda cor visualmente
+          const oldColor = this.player.class.color;
+          this.player.damage *= 2.5;
+          this.player.class.color = '#ff0000'; // Muda cor temporariamente
           game.showFloatingText('🔥 FÚRIA!', this.player.x, this.player.y - 50, '#FF4444');
           
           if (typeof audioManager !== 'undefined') audioManager.play('ability_berserker');
           
           setTimeout(() => {
-             this.player.damage /= 2;
-             this.player.color = null; // Restaura
+             this.player.damage /= 2.5;
+             this.player.class.color = oldColor; // Restaura cor
           }, 5000);
         }
       },
@@ -91,16 +90,15 @@ class AbilitySystem {
         name: 'Chuva de Flechas',
         cooldown: 6000,
         duration: 800,
-        description: 'Dispara 8 flechas',
+        description: 'Dispara 12 flechas',
         effect: (game) => {
-            // Atira em círculo
-            for (let i = 0; i < 12; i++) {
-                const angle = (i / 12) * Math.PI * 2;
+            for (let i = 0; i < 16; i++) {
+                const angle = (i / 16) * Math.PI * 2;
                 game.projectiles.push({
                     type: 'projectile', fromPlayer: true,
                     x: this.player.x, y: this.player.y,
-                    vx: Math.cos(angle) * 400,
-                    vy: Math.sin(angle) * 400,
+                    vx: Math.cos(angle) * 450,
+                    vy: Math.sin(angle) * 450,
                     life: 1.5, color: '#27ae60', style: 'arrow'
                 });
             }
@@ -115,24 +113,24 @@ class AbilitySystem {
         duration: 500,
         description: 'Explosão em área',
         effect: (game) => {
-            // Cria onda de choque visual
-            for(let i=0; i<20; i++) {
+            // Visual
+            for(let i=0; i<30; i++) {
                 const angle = Math.random() * Math.PI * 2;
                 game.projectiles.push({
                     type: 'projectile', fromPlayer: true,
                     x: this.player.x, y: this.player.y,
                     vx: Math.cos(angle) * 600,
                     vy: Math.sin(angle) * 600,
-                    life: 0.5, color: '#9b59b6', style: 'magic'
+                    life: 0.6, color: '#9b59b6', style: 'magic'
                 });
             }
             
-            // Dano em área
+            // Lógica Dano
             let hit = false;
             game.gameObjects.forEach(e => {
                 const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
-                if (dist < 250) {
-                    e.currentHp -= this.player.damage * 2.5;
+                if (dist < 300) {
+                    e.currentHp -= this.player.damage * 3;
                     game.showFloatingText('BOOM!', e.x, e.y-40, '#9370DB');
                     hit = true;
                 }
@@ -148,17 +146,16 @@ class AbilitySystem {
         duration: 800,
         description: 'Cura + Raízes',
         effect: (game) => {
-          const heal = Math.floor(this.player.maxHp * 0.4);
+          const heal = Math.floor(this.player.maxHp * 0.5);
           this.player.currentHp = Math.min(this.player.currentHp + heal, this.player.maxHp);
           
           game.showFloatingText(`✨ +${heal} HP`, this.player.x, this.player.y - 50, '#00b894');
           
-          // Imobiliza inimigos (simulado com velocidade 0 temporaria)
           game.gameObjects.forEach(e => {
-             if(Math.hypot(e.x-this.player.x, e.y-this.player.y) < 300) {
+             if(Math.hypot(e.x-this.player.x, e.y-this.player.y) < 350) {
                  const oldSpeed = e.speed;
                  e.speed = 0;
-                 setTimeout(()=>e.speed = oldSpeed, 2000);
+                 setTimeout(()=>e.speed = oldSpeed, 2500);
              }
           });
 
@@ -194,7 +191,7 @@ class AbilitySystem {
       ctx.fillText(remaining, x, y+5);
     } else {
       ctx.fillStyle = '#00b894';
-      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.fill(); // Indicador verde de pronto
+      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.fill(); 
       ctx.fillStyle = '#fff'; ctx.font='10px Arial';
       ctx.fillText("Q", x, y+4);
     }

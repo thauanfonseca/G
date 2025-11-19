@@ -1,4 +1,4 @@
-// ================== RENDERIZADOR AVANÇADO ==================
+// ================== RENDERIZADOR AVANÇADO (Pixel Art Procedural) ==================
 class PixelRenderer {
     static drawSprite(ctx, e, isPlayer) {
         if (!e || typeof e.x !== 'number') return;
@@ -55,6 +55,7 @@ class PixelRenderer {
         }
     }
 
+    // Desenha o Jogador (Heroico)
     static drawHumanoid(ctx, e, isPlayer, animY) {
         const color = e.class.color;
         const skinColor = '#ffccaa';
@@ -63,36 +64,45 @@ class PixelRenderer {
         const armorColor = level >= 10 ? '#f1c40f' : (level >= 5 ? '#95a5a6' : color);
         const facingX = e.facing ? e.facing.x : 1;
         
-        // Animação de andar
         const isMoving = (Math.abs(e.vx||0) > 0.1 || Math.abs(e.vy||0) > 0.1);
         const walk = isMoving ? Math.sin(Date.now() / 100) * 3 : 0;
         
+        // Pernas
         ctx.fillStyle = pantsColor;
-        ctx.fillRect(-6, -5, 4, 12 + walk); ctx.fillRect(2, -5, 4, 12 - walk); 
+        ctx.fillRect(-6, -5, 4, 12 + walk); 
+        ctx.fillRect(2, -5, 4, 12 - walk); 
 
         ctx.translate(0, -14 + animY); 
-        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9, -2, 18, 16); // Capa
-        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); // Torso
+        
+        // Capa (atrás)
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9, -2, 18, 16); 
+        
+        // Torso
+        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); 
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-8, 10, 16, 4); // Cinto
-        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); // Cabeça
 
+        // Cabeça
+        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); 
+
+        // Capacete
         if (level >= 5) { 
             ctx.fillStyle = level >= 10 ? '#f1c40f' : '#7f8c8d'; 
             ctx.fillRect(-8, -14, 16, 6); ctx.fillRect(-8, -14, 4, 14); 
             if(facingX < 0) ctx.fillRect(4, -14, 4, 14); 
         }
 
+        // Olhos
         ctx.fillStyle = '#000';
         const eyeOffset = facingX > 0 ? 2 : -2;
         ctx.fillRect(-2 + eyeOffset, -8, 2, 2); ctx.fillRect(2 + eyeOffset, -8, 2, 2);
 
+        // ARMA (Desenhada POR ÚLTIMO para ficar na frente)
         this.drawWeapon(ctx, e, true);
     }
 
     static drawMonster(ctx, e, animY) {
         const shape = e.shape || 'default';
-        const vx = e.vx || 0;
-        const facingX = vx >= 0 ? 1 : -1;
+        const facingX = e.vx >= 0 ? 1 : -1;
         const walk = Math.sin(Date.now() / 150) * 3;
 
         if (shape === 'goblin') {
@@ -101,8 +111,7 @@ class PixelRenderer {
             ctx.translate(0, -10 + animY);
             ctx.fillStyle = e.color; ctx.fillRect(-8, 0, 16, 12); 
             ctx.fillStyle = '#27ae60'; ctx.fillRect(-10, -10, 20, 12);
-            ctx.fillStyle = '#fff'; ctx.fillRect(facingX > 0 ? 2 : -8, -6, 3, 3);
-            ctx.fillStyle = '#c0392b'; ctx.fillRect(facingX > 0 ? 2 : -8, -2, 4, 1);
+            ctx.fillStyle = '#fff'; ctx.fillRect(facingX > 0 ? 2 : -8, -6, 3, 3); // Olho
         } else if (shape === 'skeleton') {
             ctx.fillStyle = '#dfe6e9';
             ctx.fillRect(-5, -5, 2, 15 + walk); ctx.fillRect(3, -5, 2, 15 - walk);
@@ -122,11 +131,20 @@ class PixelRenderer {
             ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill(); 
             ctx.fillRect(-15, 0, 30, 20); ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#00f'; ctx.fillRect(-5, -5, 4, 4); ctx.fillRect(3, -5, 4, 4);
+        } else if (shape === 'human') {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-6, -5, 4, 12 + walk); ctx.fillRect(2, -5, 4, 12 - walk);
+            ctx.translate(0, -14 + animY);
+            ctx.fillStyle = e.color; ctx.fillRect(-8, 0, 16, 14);
+            ctx.fillStyle = '#ffccaa'; ctx.fillRect(-7, -12, 14, 12);
+            ctx.fillStyle = '#000'; ctx.fillRect(facingX > 0 ? 2 : -6, -6, 3, 3); // Bandana/Olho
         } else {
             ctx.translate(0, -10); ctx.fillStyle = e.color;
             ctx.beginPath(); ctx.ellipse(0, 0, 15, 10, 0, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#fff'; ctx.fillRect(facingX>0?5:-10, -5, 3, 3);
         }
+        
+        // Arma do monstro
         this.drawWeapon(ctx, e, false);
     }
 
@@ -134,21 +152,34 @@ class PixelRenderer {
         if (!e.weapon) return;
         ctx.save();
         const weaponType = isPlayer ? e.class.weapon : e.weapon;
-        ctx.translate(12, 5); 
-        if (e.justHit) ctx.rotate(Math.sin(Date.now()/50)); 
+        
+        // Posiciona a arma mais à frente e na mão
+        ctx.translate(14, 0); 
+        
+        // Animação de ataque
+        if (e.justHit || (isPlayer && window.game && window.game.spacePressed)) {
+            ctx.rotate(Math.sin(Date.now()/50)); 
+        } else {
+            // Idle pose
+             ctx.rotate(-0.2);
+        }
 
         if (weaponType === 'sword' || weaponType === 'dagger') {
-            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-2, -14, 4, 14); 
-            ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, 0, 4, 8);
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-2, -14, 4, 14); // Lâmina
+            ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, 0, 4, 8); // Cabo
+            ctx.fillStyle = '#f1c40f'; ctx.fillRect(-4, -2, 8, 2); // Guarda
         } else if (weaponType === 'axe') {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, -10, 4, 20); 
-            ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, -8, 8, 0, Math.PI, true); ctx.fill(); 
+            ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, -8, 10, 0, Math.PI, true); ctx.fill(); 
         } else if (weaponType === 'staff') {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, -15, 4, 30); 
-            ctx.fillStyle = e.color || '#f00'; ctx.beginPath(); ctx.arc(0, -15, 5, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = e.class ? e.class.color : e.color; 
+            ctx.beginPath(); ctx.arc(0, -15, 6, 0, Math.PI*2); ctx.fill(); 
+            ctx.shadowBlur = 5; ctx.shadowColor = '#fff';
         } else if (weaponType === 'bow') {
             ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(0, 0, 10, -Math.PI/2, Math.PI/2); ctx.stroke(); 
+            ctx.beginPath(); ctx.arc(0, 0, 12, -Math.PI/2, Math.PI/2); ctx.stroke(); 
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, -12, 1, 24); 
         }
         ctx.restore();
     }
@@ -160,40 +191,20 @@ class PixelRenderer {
         ctx.fillStyle = p.color;
         if (p.style === 'arrow') {
             ctx.fillRect(-10, -1, 20, 2);
+            ctx.fillStyle = '#fff'; ctx.fillRect(-10, -2, 4, 4);
         } else {
             ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 10; ctx.shadowColor = p.color;
         }
         ctx.restore();
     }
 
-    static drawTree(ctx, e) {
-        ctx.save(); ctx.translate(e.x, e.y);
-        ctx.fillStyle = '#5d4037'; ctx.fillRect(-6, -15, 12, 20);
-        ctx.fillStyle = '#2d6a4f'; ctx.beginPath(); ctx.moveTo(0, -55); ctx.lineTo(-20, -15); ctx.lineTo(20, -15); ctx.fill();
-        ctx.restore();
-    }
-    static drawTwistedTree(ctx, e) {
-        ctx.save(); ctx.translate(e.x, e.y);
-        ctx.fillStyle = '#2d3436'; ctx.fillRect(-5, -20, 10, 25);
-        ctx.fillStyle = '#636e72'; ctx.beginPath(); ctx.arc(0, -25, 15, 0, Math.PI*2); ctx.fill();
-        ctx.restore();
-    }
-    static drawCactus(ctx, e) {
-        ctx.save(); ctx.translate(e.x, e.y);
-        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0, 0, 15, 6, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#27ae60'; ctx.fillRect(-8, -40, 16, 45); ctx.fillRect(-16, -25, 8, 8); ctx.fillRect(8, -20, 8, 8);
-        ctx.restore();
-    }
-    static drawCrystal(ctx, e) {
-        ctx.save(); ctx.translate(e.x, e.y);
-        ctx.fillStyle = 'rgba(116, 185, 255, 0.8)'; ctx.beginPath(); ctx.moveTo(0, -35); ctx.lineTo(10, 0); ctx.lineTo(0, 10); ctx.lineTo(-10, 0); ctx.fill();
-        ctx.restore();
-    }
-    static drawRuins(ctx, e) {
-        ctx.save(); ctx.translate(e.x, e.y);
-        ctx.fillStyle = '#7f8c8d'; ctx.fillRect(-10, -30, 20, 30); ctx.fillRect(-12, -32, 24, 5);
-        ctx.restore();
-    }
+    // BIOMAS (Simplificados para não ocupar espaço, mantidos iguais)
+    static drawTree(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='#5d4037'; ctx.fillRect(-6,-15,12,20); ctx.fillStyle='#2d6a4f'; ctx.beginPath(); ctx.moveTo(0,-55); ctx.lineTo(-20,-15); ctx.lineTo(20,-15); ctx.fill(); ctx.restore(); }
+    static drawTwistedTree(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='#2d3436'; ctx.fillRect(-5,-20,10,25); ctx.fillStyle='#636e72'; ctx.beginPath(); ctx.arc(0,-25,15,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+    static drawCactus(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(0,0,15,6,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#27ae60'; ctx.fillRect(-8,-40,16,45); ctx.fillRect(-16,-25,8,8); ctx.fillRect(8,-20,8,8); ctx.restore(); }
+    static drawCrystal(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='rgba(116,185,255,0.8)'; ctx.beginPath(); ctx.moveTo(0,-35); ctx.lineTo(10,0); ctx.lineTo(0,10); ctx.lineTo(-10,0); ctx.fill(); ctx.restore(); }
+    static drawRuins(ctx, e) { ctx.save(); ctx.translate(e.x, e.y); ctx.fillStyle='#7f8c8d'; ctx.fillRect(-10,-30,20,30); ctx.fillRect(-12,-32,24,5); ctx.restore(); }
 }
 
 // ================== LÓGICA PRINCIPAL ==================
@@ -253,11 +264,8 @@ class SurvivalGame {
         if (!this.player) return;
         this.paused = !this.paused;
         const pauseScreen = document.getElementById('pause-screen');
-        if (this.paused) {
-            if (pauseScreen) pauseScreen.classList.add('active');
-        } else {
-            if (pauseScreen) pauseScreen.classList.remove('active');
-        }
+        if (this.paused) pauseScreen.classList.add('active');
+        else pauseScreen.classList.remove('active');
     }
 
     showScreen(id) { 
@@ -308,7 +316,7 @@ class SurvivalGame {
         this.spawnEnemy(); 
         if (this.spawnInterval) clearInterval(this.spawnInterval);
         this.spawnInterval = setInterval(() => { 
-            if(!this.bossActive && !this.paused && this.gameObjects.length < 15) this.spawnEnemy(); 
+            if(!this.bossActive && !this.paused && this.gameObjects.length < 20) this.spawnEnemy(); 
         }, 1500);
         this.showFloatingText(`Mundo: ${biome.name}`, gameEngine.player.x, gameEngine.player.y-100, biome.color);
     }
@@ -374,7 +382,6 @@ class SurvivalGame {
                     this.showFloatingText(`+${xp} XP`, e.x, e.y-60, '#0f0');
                 }
                 
-                // BOSS MORREU - MOSTRA HISTÓRIA E AVANÇA
                 if(e.isBoss) {
                     this.showFloatingText("VITÓRIA!", gameEngine.player.x, gameEngine.player.y, '#0f0');
                     if(this.audioManager) this.audioManager.play('level_up');
@@ -382,7 +389,6 @@ class SurvivalGame {
                     setTimeout(() => {
                         const biome = GAME_DATA.biomes.find(b => b.id === this.currentBiomeId);
                         if(this.storyEngine && biome.victoryText) {
-                            // Chama a tela de história. Quando o usuário clicar em "Continuar", executa enterNextBiome
                             this.storyEngine.showStoryScreen(biome.name + " - Concluído", biome.victoryText, () => {
                                 this.enterNextBiome();
                             });
@@ -404,7 +410,6 @@ class SurvivalGame {
              return;
         }
         const nextBiome = GAME_DATA.biomes[this.currentBiomeIndex];
-        // Mostra Intro do próximo mapa
         if(this.storyEngine && nextBiome.introText) {
              this.storyEngine.showStoryScreen(nextBiome.name, nextBiome.introText, () => {
                   this.enterBiome(nextBiome.id);
@@ -427,12 +432,17 @@ class SurvivalGame {
         if(this.keys['d']||this.keys['arrowright']) dx = 1;
         
         p.vx = dx; p.vy = dy;
+        
+        // LOGICA DE MIRA (Facing) MELHORADA
         if (dx !== 0 || dy !== 0) {
             p.facing = { x: dx, y: dy };
             const l = Math.hypot(dx, dy);
             if(l > 0) { p.facing.x /= l; p.facing.y /= l; }
-        } else if(!p.facing) p.facing = {x: 0, y: 1};
+        } else if(!p.facing) {
+             p.facing = {x: 1, y: 0}; // Padrão para direita
+        }
 
+        // MOVIMENTO + COLISÃO
         if(dx !== 0 || dy !== 0) {
             const len = Math.hypot(dx,dy); const moveX = (dx/len)*p.speed*dt; const moveY = (dy/len)*p.speed*dt;
             let canMoveX = true; let nextX = p.x + moveX;
@@ -449,12 +459,14 @@ class SurvivalGame {
         if(this.keys[' '] && !this.spacePressed) { this.spacePressed=true; this.handlePlayerAttack(); }
         if(!this.keys[' ']) this.spacePressed=false;
 
+        // PROJÉTEIS
         this.projectiles = this.projectiles.filter(proj => {
             proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.life -= dt;
             if(proj.fromPlayer) {
                 const enemies = [...this.gameObjects];
                 for(let enemy of enemies) {
-                    if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < 35) {
+                    // Aumentei hitbox
+                    if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < 40 + (enemy.scale||1)*10) {
                         const res = gameEngine.playerAttack(enemy);
                         const mult = this.comboSystem.getMultiplier();
                         const finalDmg = Math.floor(res.damage * mult);
@@ -466,7 +478,7 @@ class SurvivalGame {
                     }
                 }
             } else {
-                if(Math.hypot(proj.x - p.x, proj.y - p.y) < 20) {
+                if(Math.hypot(proj.x - p.x, proj.y - p.y) < 25) {
                     const dmg = gameEngine.enemyAttack({damage: 15}); 
                     this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
                     if(this.audioManager) this.audioManager.play('hit_normal');
@@ -477,12 +489,13 @@ class SurvivalGame {
             return proj.life > 0;
         });
 
+        // INIMIGOS
         const enemies = [...this.gameObjects];
         const now = performance.now();
         enemies.forEach(e => {
             const dist = Math.hypot(p.x-e.x, p.y-e.y); 
             const isRanged = (e.weapon === 'bow' || e.weapon === 'staff' || e.shape === 'ghost');
-            const stopDist = isRanged ? 300 : 25;
+            const stopDist = isRanged ? 350 : 25;
             
             if(dist > stopDist) {
                 const speed = e.speed * (e.justHit ? 0.5 : 1); 
@@ -491,13 +504,13 @@ class SurvivalGame {
             } else { e.vx = 0; e.vy = 0; }
 
             if (isRanged) {
-                if (dist < 450 && now - (e.lastShot||0) > 2000) {
+                if (dist < 500 && now - (e.lastShot||0) > 2000) {
                      e.lastShot = now;
                      const angle = Math.atan2(p.y - e.y, p.x - e.x);
-                     this.projectiles.push({ type: 'projectile', fromPlayer: false, x: e.x, y: e.y, vx: Math.cos(angle)*300, vy: Math.sin(angle)*300, life: 2, color: '#ff4757', style: 'magic' });
+                     this.projectiles.push({ type: 'projectile', fromPlayer: false, x: e.x, y: e.y, vx: Math.cos(angle)*350, vy: Math.sin(angle)*350, life: 2, color: '#ff4757', style: 'magic' });
                 }
             } else {
-                if(dist < 30 && now-e.lastAttack > 1000) {
+                if(dist < 35 + (e.scale||1)*10 && now-e.lastAttack > 1000) {
                     const dmg = gameEngine.enemyAttack(e);
                     this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
                     if(this.audioManager) this.audioManager.play('hit_normal');
@@ -519,21 +532,18 @@ class SurvivalGame {
     handlePlayerAttack() {
         const p = gameEngine.player;
         let shotDirX = p.facing.x; let shotDirY = p.facing.y;
-        if (shotDirX === 0 && shotDirY === 0) shotDirX = 1;
+        
+        // Normalização extra por segurança
+        const l = Math.hypot(shotDirX, shotDirY);
+        if(l > 0) { shotDirX /= l; shotDirY /= l; }
+        else { shotDirX = 1; shotDirY = 0; }
 
-        // Kiting Calculation: shoot opposite to movement if moving
+        // Kiting Calculation
         const isMoving = (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1);
         if (p.class.type === 'ranged' && isMoving) { 
-            // Invert direction of shoot
-            shotDirX = -p.vx; 
-            shotDirY = -p.vy;
-            // Normalize again
-            const len = Math.hypot(shotDirX, shotDirY);
-            if(len > 0) { shotDirX /= len; shotDirY /= len; }
-        } else if (p.class.type === 'ranged') {
-            // If standing still, use facing
-            shotDirX = p.facing.x;
-            shotDirY = p.facing.y;
+            shotDirX = -p.vx; shotDirY = -p.vy;
+            const l2 = Math.hypot(shotDirX, shotDirY);
+            if(l2 > 0) { shotDirX /= l2; shotDirY /= l2; }
         }
 
         if (p.class.type === 'ranged') {
@@ -542,10 +552,19 @@ class SurvivalGame {
         } else {
             let hit = false;
             [...this.gameObjects].forEach(e => {
-                const dist = Math.hypot(p.x-e.x, p.y-e.y); const dx = e.x - p.x; const dy = e.y - p.y; const dot = (dx * p.facing.x) + (dy * p.facing.y);
-                if(dist < 90 && dot > 0) { 
-                    const res = gameEngine.playerAttack(e); const mult = this.comboSystem.getMultiplier(); const finalDmg = Math.floor(res.damage * mult); e.currentHp -= (finalDmg - res.damage);
-                    this.showFloatingText(finalDmg, e.x, e.y-40, mult>1?'#f1c40f':'#fff'); this.checkEnemyDeath(e); hit = true;
+                // MELEE FIX: Ataque circular (sem dot product) + consideração de escala
+                const dist = Math.hypot(p.x-e.x, p.y-e.y);
+                // Alcance base 90 + tamanho do inimigo (scale * 20)
+                const reach = 100 + (e.scale || 1) * 20;
+                
+                if(dist < reach) { 
+                    const res = gameEngine.playerAttack(e); 
+                    const mult = this.comboSystem.getMultiplier(); 
+                    const finalDmg = Math.floor(res.damage * mult); 
+                    e.currentHp -= (finalDmg - res.damage);
+                    this.showFloatingText(finalDmg, e.x, e.y-40, mult>1?'#f1c40f':'#fff'); 
+                    this.checkEnemyDeath(e); 
+                    hit = true;
                 }
             });
             if(hit && this.audioManager) this.audioManager.play('hit_critical');

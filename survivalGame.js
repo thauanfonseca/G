@@ -2,11 +2,18 @@
 class PixelRenderer {
     static drawSprite(ctx, e, isPlayer) {
         if (!e || typeof e.x !== 'number') return;
+        
+        // Decorações Variadas
         if (e.type === 'decoration') { 
             if (e.style === 'cactus') this.drawCactus(ctx, e);
+            else if (e.style === 'crystal') this.drawCrystal(ctx, e);
+            else if (e.style === 'ruins') this.drawRuins(ctx, e);
+            else if (e.style === 'twisted_tree') this.drawTwistedTree(ctx, e);
             else this.drawTree(ctx, e); 
             return; 
         }
+        
+        // Projéteis (Inimigos também usam agora)
         if (e.type === 'projectile') { this.drawProjectile(ctx, e); return; }
 
         const scale = e.scale || 1;
@@ -19,7 +26,8 @@ class PixelRenderer {
         ctx.scale(scale, scale);
 
         // Sombra
-        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 5, 14, 6, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; 
+        ctx.beginPath(); ctx.ellipse(0, 5, 14, 6, 0, 0, Math.PI*2); ctx.fill();
 
         // Auras
         if (e.isBoss) {
@@ -30,6 +38,7 @@ class PixelRenderer {
             ctx.strokeStyle = '#00b894'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, -15, 25, 0, Math.PI*2); ctx.stroke();
         }
+
         if (e.justHit) { ctx.globalAlpha = 0.7; ctx.fillStyle = '#fff'; }
 
         this.drawHumanoid(ctx, e, isPlayer, breathe);
@@ -53,26 +62,28 @@ class PixelRenderer {
         const skinColor = '#ffccaa';
         const armorColor = level >= 10 ? '#f1c40f' : (level >= 5 ? '#95a5a6' : color); 
         const pantsColor = '#2d3436';
+
         const facingX = e.facing ? e.facing.x : (e.vx > 0 ? 1 : -1);
         
         const isMoving = (Math.abs(e.vx||0) > 0.1 || Math.abs(e.vy||0) > 0.1);
         const walk = isMoving ? Math.sin(Date.now() / 100) * 3 : 0;
         
         ctx.fillStyle = pantsColor;
-        ctx.fillRect(-6, -5, 4, 12 + walk); // Perna Esq
-        ctx.fillRect(2, -5, 4, 12 - walk); // Perna Dir
+        ctx.fillRect(-6, -5, 4, 12 + walk); 
+        ctx.fillRect(2, -5, 4, 12 - walk); 
 
         ctx.translate(0, -14 + animY); 
-        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); // Torso
-        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-8, 10, 16, 4); // Cinto
-        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); // Cabeça
+        ctx.fillStyle = armorColor; ctx.fillRect(-8, 0, 16, 14); 
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-8, 10, 16, 4); 
+
+        ctx.fillStyle = skinColor; ctx.fillRect(-7, -12, 14, 12); 
 
         if (level >= 5) { 
             ctx.fillStyle = level >= 10 ? '#f1c40f' : '#7f8c8d'; 
             ctx.fillRect(-8, -14, 16, 6); ctx.fillRect(-8, -14, 4, 14); 
             if(facingX < 0) ctx.fillRect(4, -14, 4, 14); 
         }
-        ctx.fillStyle = '#000'; // Olhos
+        ctx.fillStyle = '#000'; 
         const eyeOffset = facingX > 0 ? 2 : -2;
         ctx.fillRect(-2 + eyeOffset, -8, 2, 2); ctx.fillRect(2 + eyeOffset, -8, 2, 2);
         this.drawWeapon(ctx, e, isPlayer);
@@ -80,7 +91,7 @@ class PixelRenderer {
 
     static drawWeapon(ctx, e, isPlayer) {
         ctx.save();
-        const weaponType = isPlayer ? e.class.weapon : (e.weapon || 'sword');
+        const weaponType = isPlayer ? e.class.weapon : (e.weapon || 'melee');
         const level = e.level || 1;
         ctx.translate(10, 5); 
         if (e.justHit || (isPlayer && window.game && window.game.spacePressed)) ctx.rotate(Math.sin(Date.now()/50)); 
@@ -95,7 +106,7 @@ class PixelRenderer {
             ctx.fillStyle = wColor; ctx.beginPath(); ctx.arc(0, -8, 8, 0, Math.PI, true); ctx.fill(); 
         } else if (weaponType === 'staff') {
             ctx.fillStyle = '#5d4037'; ctx.fillRect(-2, -15, 4, 30); 
-            ctx.fillStyle = e.class ? e.class.color : '#f00'; ctx.beginPath(); ctx.arc(0, -15, 5, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = e.color || '#f00'; ctx.beginPath(); ctx.arc(0, -15, 5, 0, Math.PI*2); ctx.fill(); 
         } else if (weaponType === 'bow') {
             ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, 0, 10, -Math.PI/2, Math.PI/2); ctx.stroke(); 
@@ -119,12 +130,21 @@ class PixelRenderer {
         ctx.restore();
     }
 
+    // === NOVOS BIOMAS ===
     static drawTree(ctx, e) {
         ctx.save(); ctx.translate(e.x, e.y);
         ctx.fillStyle = '#5d4037'; ctx.fillRect(-6, -15, 12, 20);
         ctx.fillStyle = '#2d6a4f'; 
         ctx.beginPath(); ctx.moveTo(0, -55); ctx.lineTo(-20, -15); ctx.lineTo(20, -15); ctx.fill();
         ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(-16, -10); ctx.lineTo(16, -10); ctx.fill();
+        ctx.restore();
+    }
+    static drawTwistedTree(ctx, e) {
+        ctx.save(); ctx.translate(e.x, e.y);
+        ctx.fillStyle = '#2d3436'; ctx.fillRect(-5, -20, 10, 25); // Tronco escuro
+        ctx.fillStyle = '#636e72'; // Folhas mortas
+        ctx.beginPath(); ctx.arc(0, -25, 15, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-10, -15, 10, 0, Math.PI*2); ctx.fill();
         ctx.restore();
     }
     static drawCactus(ctx, e) {
@@ -134,6 +154,23 @@ class PixelRenderer {
         ctx.fillRect(-8, -40, 16, 45); 
         ctx.fillRect(-16, -25, 8, 8); ctx.fillRect(-16, -35, 6, 10); 
         ctx.fillRect(8, -20, 8, 8); ctx.fillRect(10, -30, 6, 10);
+        ctx.restore();
+    }
+    static drawCrystal(ctx, e) {
+        ctx.save(); ctx.translate(e.x, e.y);
+        ctx.fillStyle = 'rgba(116, 185, 255, 0.6)'; 
+        ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(10, 0); ctx.lineTo(0, 10); ctx.lineTo(-10, 0); ctx.fill();
+        ctx.fillStyle = 'rgba(116, 185, 255, 0.9)'; 
+        ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(5, 0); ctx.lineTo(0, 10); ctx.lineTo(-5, 0); ctx.fill();
+        ctx.restore();
+    }
+    static drawRuins(ctx, e) {
+        ctx.save(); ctx.translate(e.x, e.y);
+        ctx.fillStyle = '#95a5a6'; 
+        ctx.fillRect(-10, -30, 20, 30); // Pilar
+        ctx.fillStyle = '#7f8c8d'; 
+        ctx.fillRect(-12, -32, 24, 5); // Topo
+        ctx.fillRect(-11, -5, 22, 5); // Base
         ctx.restore();
     }
 }
@@ -152,6 +189,7 @@ class SurvivalGame {
         this.comboSystem = new ComboSystem();
         this.abilitySystem = null; 
         this.audioManager = typeof audioManager !== 'undefined' ? audioManager : null;
+        this.storyEngine = typeof storyEngine !== 'undefined' ? storyEngine : null;
 
         this.currentBiomeIndex = 0; 
         this.bossActive = false; 
@@ -225,7 +263,14 @@ class SurvivalGame {
 
         const decoType = biome.decoration || 'tree';
         for(let i=0; i<50; i++) {
-            this.decorations.push({ x: Math.random()*2400-1200, y: Math.random()*1800-900, type: 'decoration', style: decoType, scale: 0.9 + Math.random()*0.3, collisionRadius: 15 });
+            this.decorations.push({ 
+                x: Math.random()*2400-1200, 
+                y: Math.random()*1800-900, 
+                type: 'decoration', 
+                style: decoType, 
+                scale: 0.9 + Math.random()*0.3, 
+                collisionRadius: 15 
+            });
         }
         this.spawnEnemy(); 
         if (this.spawnInterval) clearInterval(this.spawnInterval);
@@ -235,15 +280,25 @@ class SurvivalGame {
 
     enterNextBiome() {
         this.currentBiomeIndex++;
-        if(this.currentBiomeIndex >= GAME_DATA.biomes.length) this.currentBiomeIndex = 0;
+        if(this.currentBiomeIndex >= GAME_DATA.biomes.length) {
+             // FIM DE JOGO - Epílogo
+             if(this.storyEngine) this.storyEngine.showEpilogue();
+             return;
+        }
+
         const nextBiome = GAME_DATA.biomes[this.currentBiomeIndex];
-        const overlay = document.getElementById('damage-overlay');
-        if(overlay) { overlay.style.background = '#000'; overlay.style.opacity = 1; }
-        setTimeout(() => {
+        
+        // Mostra história ANTES de mudar
+        if (this.storyEngine) {
+            this.storyEngine.showBiomeStory(nextBiome.id, () => {
+                 // Callback quando fecha a história
+                 this.enterBiome(nextBiome.id);
+                 gameEngine.player.x = 0; gameEngine.player.y = 0; 
+            });
+        } else {
             this.enterBiome(nextBiome.id);
             gameEngine.player.x = 0; gameEngine.player.y = 0; 
-            if(overlay) { overlay.style.opacity = 0; overlay.style.background = 'radial-gradient(circle, transparent 50%, rgba(255,0,0,0.5) 100%)'; }
-        }, 1500);
+        }
     }
 
     spawnEnemy(forcedType = null, isMiniBoss = false, isBoss = false) {
@@ -256,7 +311,7 @@ class SurvivalGame {
         else if(forcedType) data = GAME_DATA.enemies.find(e=>e.id===forcedType);
         else data = GAME_DATA.enemies.find(e=>e.id===biome.enemies[Math.floor(Math.random()*biome.enemies.length)]);
 
-        if(!data) { console.warn("Enemy data missing for", forcedType || "random"); return false; }
+        if(!data) { console.warn("Enemy missing"); return false; }
         const enemy = gameEngine.createEnemy(data, isBoss, isMiniBoss, diff);
         
         let safe = false; let attempts = 0;
@@ -281,9 +336,7 @@ class SurvivalGame {
         const kills = gameEngine.biomeKills;
         if(kills >= 10 && this.miniBossDefeated && !this.bossActive) {
             this.gameObjects = []; 
-            if(this.spawnEnemy(null, false, true)) {
-                this.bossActive = true; // Só ativa se spawnar com sucesso
-            }
+            if(this.spawnEnemy(null, false, true)) this.bossActive = true; 
             return;
         }
         if(kills >= 5 && !this.miniBossSpawned && !this.bossActive) {
@@ -295,13 +348,14 @@ class SurvivalGame {
 
     update(dt) {
         const p = gameEngine.player; if(!p) return;
+        
         let dx = 0, dy = 0;
         if(this.keys['w']||this.keys['arrowup']) dy = -1;
         if(this.keys['s']||this.keys['arrowdown']) dy = 1;
         if(this.keys['a']||this.keys['arrowleft']) dx = -1;
         if(this.keys['d']||this.keys['arrowright']) dx = 1;
+        
         p.vx = dx; p.vy = dy;
-
         if (dx !== 0 || dy !== 0) {
             p.facing = { x: dx, y: dy };
             const l = Math.hypot(dx, dy);
@@ -324,16 +378,16 @@ class SurvivalGame {
         if(this.keys[' '] && !this.spacePressed) { this.spacePressed=true; this.handlePlayerAttack(); }
         if(!this.keys[' ']) this.spacePressed=false;
 
+        // --- PROJÉTEIS ---
         this.projectiles = this.projectiles.filter(proj => {
             proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.life -= dt;
+            
+            // Colisão com INIMIGOS (Player atirou)
             if(proj.fromPlayer) {
-                // ITERAÇÃO SEGURA: Cria cópia do array
                 const enemies = [...this.gameObjects];
                 for(let enemy of enemies) {
-                    const hitSize = 35;
-                    if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < hitSize) {
+                    if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < 35) {
                         const res = gameEngine.playerAttack(enemy);
-                        const combo = this.comboSystem.recordHit(res.damage);
                         const mult = this.comboSystem.getMultiplier();
                         const finalDmg = Math.floor(res.damage * mult);
                         enemy.currentHp -= (finalDmg - res.damage); 
@@ -343,26 +397,57 @@ class SurvivalGame {
                         return false; 
                     }
                 }
+            } 
+            // Colisão com PLAYER (Inimigo atirou)
+            else {
+                if(Math.hypot(proj.x - p.x, proj.y - p.y) < 20) {
+                    const dmg = gameEngine.enemyAttack({damage: 15}); // Dano base do projétil inimigo
+                    this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
+                    if(this.audioManager) this.audioManager.play('hit_normal');
+                    if(p.currentHp<=0) this.gameOver();
+                    return false;
+                }
             }
             return proj.life > 0;
         });
 
-        // ITERAÇÃO SEGURA INIMIGOS
+        // --- INIMIGOS (IA Melhorada) ---
         const enemies = [...this.gameObjects];
         const now = performance.now();
+        
         enemies.forEach(e => {
-            const dist = Math.hypot(p.x-e.x, p.y-e.y); const stop = 25;
-            if(dist > stop) {
+            const dist = Math.hypot(p.x-e.x, p.y-e.y); 
+            const isRanged = (e.weapon === 'bow' || e.weapon === 'staff' || e.id === 'spirit' || e.id === 'specter');
+            const stopDist = isRanged ? 300 : 25; // Arqueiros param longe
+            
+            // Movimento
+            if(dist > stopDist) {
                 const speed = e.speed * (e.justHit ? 0.5 : 1); 
                 e.vx = (p.x-e.x)/dist; e.vy = (p.y-e.y)/dist;
                 e.x += e.vx * speed * dt; e.y += e.vy * speed * dt;
             } else { e.vx = 0; e.vy = 0; }
-            if(dist < stop+10 && now-e.lastAttack > 1000) {
-                const dmg = gameEngine.enemyAttack(e);
-                this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
-                if(this.audioManager) this.audioManager.play('hit_normal');
-                e.lastAttack = now;
-                if(p.currentHp<=0) this.gameOver();
+
+            // Ataque
+            if (isRanged) {
+                // Atira se estiver perto e cooldown ok
+                if (dist < 400 && now - (e.lastShot||0) > 2000) {
+                     e.lastShot = now;
+                     const angle = Math.atan2(p.y - e.y, p.x - e.x);
+                     this.projectiles.push({
+                        type: 'projectile', fromPlayer: false, x: e.x, y: e.y,
+                        vx: Math.cos(angle)*300, vy: Math.sin(angle)*300,
+                        life: 2, color: '#ff4757', style: 'magic'
+                     });
+                }
+            } else {
+                // Melee attack
+                if(dist < 30 && now-e.lastAttack > 1000) {
+                    const dmg = gameEngine.enemyAttack(e);
+                    this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
+                    if(this.audioManager) this.audioManager.play('hit_normal');
+                    e.lastAttack = now;
+                    if(p.currentHp<=0) this.gameOver();
+                }
             }
         });
 
@@ -379,7 +464,6 @@ class SurvivalGame {
         const p = gameEngine.player;
         let shotDirX = p.facing.x; let shotDirY = p.facing.y;
         if (shotDirX === 0 && shotDirY === 0) shotDirX = 1;
-        // Kiting
         if (p.class.type === 'ranged' && (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1)) { shotDirX = -shotDirX; shotDirY = -shotDirY; }
 
         if (p.class.type === 'ranged') {
@@ -390,14 +474,12 @@ class SurvivalGame {
             if(this.audioManager) this.audioManager.play('player_attack');
         } else {
             let hit = false;
-            // Iteração Segura
             [...this.gameObjects].forEach(e => {
                 const dist = Math.hypot(p.x-e.x, p.y-e.y);
                 const dx = e.x - p.x; const dy = e.y - p.y;
                 const dot = (dx * p.facing.x) + (dy * p.facing.y);
                 if(dist < 90 && dot > 0) { 
                     const res = gameEngine.playerAttack(e);
-                    const combo = this.comboSystem.recordHit(res.damage);
                     const mult = this.comboSystem.getMultiplier();
                     const finalDmg = Math.floor(res.damage * mult);
                     e.currentHp -= (finalDmg - res.damage);
@@ -425,12 +507,12 @@ class SurvivalGame {
                 }
                 if(e.isMiniBoss) {
                     this.miniBossDefeated = true;
-                    this.showFloatingText("CAMINHO DO BOSS ABERTO!", gameEngine.player.x, gameEngine.player.y-150, '#f1c40f');
+                    this.showFloatingText("ELITE DERROTADO!", gameEngine.player.x, gameEngine.player.y-150, '#f1c40f');
                 }
                 if(e.isBoss) {
-                    this.showFloatingText("VITÓRIA!", gameEngine.player.x, gameEngine.player.y, '#0f0');
+                    this.showFloatingText("BOSS DESTRUÍDO!", gameEngine.player.x, gameEngine.player.y, '#0f0');
                     if(this.audioManager) this.audioManager.play('level_up');
-                    setTimeout(() => this.enterNextBiome(), 2000);
+                    setTimeout(() => this.enterNextBiome(), 3000); // Espera 3s e muda
                 } else {
                     this.checkSpawnEvents();
                 }

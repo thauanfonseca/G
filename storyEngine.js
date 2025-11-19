@@ -2,45 +2,55 @@ class StoryEngine {
     constructor(gameInstance) {
         this.game = gameInstance;
         this.progress = { introSeen: false };
-        
-        // Elementos da UI (Garante que existem antes de tentar acessar)
         this.titleEl = document.getElementById('story-title');
         this.textEl = document.getElementById('story-text');
         this.nextBtn = document.getElementById('story-next-btn');
     }
 
-    // Esta é a função que o botão "Nova Jornada" chama
     startNewGameWithIntro() {
-        // Se já viu a intro, vai direto para seleção de classe
         if (this.progress.introSeen) {
             this.game.showClassSelection();
         } else {
-            // Caso contrário, mostra a história inicial
             this.showPrologue();
         }
     }
 
     showPrologue() {
-        // Muda para a tela de história
-        this.game.showScreen('story-screen');
-        
-        const title = "O Despertar";
-        const text = "O Eclipse Vermelho corrompeu Elandor.<br><br>Você é o último Guardião.<br><br>Escolha seu herói e sobreviva à escuridão.";
+        const story = GAME_DATA.story.intro;
+        this.showStoryScreen(story.title, story.text, () => {
+            this.progress.introSeen = true;
+            this.game.showClassSelection();
+        });
+    }
 
+    showBiomeStory(biomeId, onComplete) {
+        const story = GAME_DATA.story[biomeId];
+        if(story) {
+            this.showStoryScreen(story.title, story.text, onComplete);
+        } else {
+            onComplete(); // Se não tiver história, pula
+        }
+    }
+    
+    showEpilogue() {
+        const story = GAME_DATA.story.epilogue;
+        this.showStoryScreen(story.title, story.text, () => {
+            location.reload(); // Fim do jogo
+        });
+    }
+
+    showStoryScreen(title, text, callback) {
+        this.game.showScreen('story-screen');
         if(this.titleEl) this.titleEl.innerHTML = title;
         if(this.textEl) this.textEl.innerHTML = text;
-
-        // Configura o botão "Continuar" da história
+        
         if(this.nextBtn) {
-            this.nextBtn.onclick = () => {
-                this.progress.introSeen = true;
-                this.game.showClassSelection();
-            };
+            this.nextBtn.onclick = callback;
         }
     }
 
     nextChapter() {
-        // Função de segurança caso chamada manualmente
+        // Fallback
         this.game.showClassSelection();
     }
 }

@@ -264,8 +264,10 @@ class SurvivalGame {
         if (!this.player) return;
         this.paused = !this.paused;
         const pauseScreen = document.getElementById('pause-screen');
-        if (this.paused) pauseScreen.classList.add('active');
-        else pauseScreen.classList.remove('active');
+        if (pauseScreen) {
+            if (this.paused) pauseScreen.classList.add('active');
+            else pauseScreen.classList.remove('active');
+        }
     }
 
     showScreen(id) { 
@@ -292,6 +294,7 @@ class SurvivalGame {
             div.innerHTML = `<div style="font-size:3rem">${c.icon}</div><div style="color:${c.color}; font-weight:bold;">${c.name}</div><div style="font-size:0.6rem; margin:10px 0;">${c.description}</div><div style="font-size:0.7rem">❤️${c.baseHp} ⚔️${c.baseDamage}</div>`;
             div.onclick = () => {
                 gameEngine.createPlayer(c);
+                this.player = gameEngine.player; // Link direto
                 this.abilitySystem = new AbilitySystem(gameEngine.player); 
                 this.enterBiome(GAME_DATA.biomes[0].id);
                 this.showScreen('game-screen');
@@ -313,34 +316,48 @@ class SurvivalGame {
         for(let i=0; i<50; i++) {
             this.decorations.push({ x: Math.random()*2400-1200, y: Math.random()*1800-900, type: 'decoration', style: decoType, scale: 0.9 + Math.random()*0.3, collisionRadius: 15 });
         }
-        this.spawnEnemy(); 
+        
+        // Spawn inicial
+        const initialCount = biome.initialEnemies || 5;
+        for(let i=0; i<initialCount; i++) this.spawnEnemy();
+
         if (this.spawnInterval) clearInterval(this.spawnInterval);
         this.spawnInterval = setInterval(() => { 
-            if(!this.bossActive && !this.paused && this.gameObjects.length < 20) this.spawnEnemy(); 
+            if(!this.bossActive && !this.paused && this.gameObjects.length < 25) this.spawnEnemy(); 
         }, 1500);
+        
         this.showFloatingText(`Mundo: ${biome.name}`, gameEngine.player.x, gameEngine.player.y-100, biome.color);
     }
 
     spawnEnemy(forcedType = null, isMiniBoss = false, isBoss = false) {
         if (!this.currentBiomeId || !gameEngine.player) return false;
         const biome = GAME_DATA.biomes.find(b=>b.id===this.currentBiomeId);
-        const diff = 1 + Math.floor(gameEngine.biomeKills / 3); 
+        
+        // Nível inimigo sobe a cada 10 kills (junto com elite)
+        const diff = 1 + Math.floor(gameEngine.biomeKills / 10); 
 
         let data;
         if(isBoss) data = GAME_DATA.bosses.find(b=>b.id===biome.boss);
         else if(forcedType) data = GAME_DATA.enemies.find(e=>e.id===forcedType);
-        else data = GAME_DATA.enemies.find(e=>e.id===biome.enemies[Math.floor(Math.random()*biome.enemies.length)]);
+        else {
+            // Pega inimigo aleatório da lista do bioma
+            const randId = biome.enemies[Math.floor(Math.random()*biome.enemies.length)];
+            data = GAME_DATA.enemies.find(e=>e.id===randId);
+        }
 
         if(!data) return false;
         const enemy = gameEngine.createEnemy(data, isBoss, isMiniBoss, diff);
         
         let safe = false; let attempts = 0;
-        while(!safe && attempts < 40) { 
-            const angle = Math.random()*Math.PI*2; const dist = isBoss ? 600 : (450 + Math.random()*400);
-            enemy.x = gameEngine.player.x + Math.cos(angle)*dist; enemy.y = gameEngine.player.y + Math.sin(angle)*dist;
+        while(!safe && attempts < 30) { 
+            const angle = Math.random()*Math.PI*2; 
+            const dist = isBoss ? 600 : (500 + Math.random()*400);
+            enemy.x = gameEngine.player.x + Math.cos(angle)*dist; 
+            enemy.y = gameEngine.player.y + Math.sin(angle)*dist;
             let colliding = false;
             for(let d of this.decorations) { if(Math.hypot(enemy.x-d.x, enemy.y-d.y) < 40) { colliding = true; break; } }
-            if(!colliding) safe = true; attempts++;
+            if(!colliding) safe = true; 
+            attempts++;
         }
         enemy.vx = 0; enemy.vy = 0;
         this.gameObjects.push(enemy);
@@ -354,14 +371,17 @@ class SurvivalGame {
 
     checkSpawnEvents() {
         const kills = gameEngine.biomeKills;
+        // BOSS aos 50
         if(kills >= 50 && !this.bossActive) {
-            this.gameObjects = this.gameObjects.filter(e => e.isBoss);
+            this.gameObjects = this.gameObjects.filter(e => e.isBoss); // Limpa área
             if(this.spawnEnemy(null, false, true)) this.bossActive = true; 
             return;
         }
+        // ELITE a cada 10
         if(kills > 0 && kills % 10 === 0 && kills < 50 && !this.miniBossSpawned) {
             this.miniBossSpawned = true; 
             const biome = GAME_DATA.biomes.find(b=>b.id===this.currentBiomeId);
+            // Spawna o primeiro inimigo da lista como elite (geralmente é o mais forte comum)
             this.spawnEnemy(biome.enemies[0], true, false);
             this.showFloatingText("ELITE CHEGOU!", gameEngine.player.x, gameEngine.player.y-100, '#f1c40f');
             setTimeout(() => this.miniBossSpawned = false, 5000);
@@ -386,10 +406,10 @@ class SurvivalGame {
                     this.showFloatingText("VITÓRIA!", gameEngine.player.x, gameEngine.player.y, '#0f0');
                     if(this.audioManager) this.audioManager.play('level_up');
                     
+                    // Mostra história de vitória e DEPOIS muda de fase
                     setTimeout(() => {
-                        const biome = GAME_DATA.biomes.find(b => b.id === this.currentBiomeId);
-                        if(this.storyEngine && biome.victoryText) {
-                            this.storyEngine.showStoryScreen(biome.name + " - Concluído", biome.victoryText, () => {
+                        if(this.storyEngine) {
+                            this.storyEngine.showVictoryStory(this.currentBiomeId, () => {
                                 this.enterNextBiome();
                             });
                         } else {
@@ -410,8 +430,9 @@ class SurvivalGame {
              return;
         }
         const nextBiome = GAME_DATA.biomes[this.currentBiomeIndex];
-        if(this.storyEngine && nextBiome.introText) {
-             this.storyEngine.showStoryScreen(nextBiome.name, nextBiome.introText, () => {
+        // Mostra intro do próximo mapa
+        if(this.storyEngine) {
+             this.storyEngine.showBiomeStory(nextBiome.id, () => {
                   this.enterBiome(nextBiome.id);
                   gameEngine.player.x = 0; gameEngine.player.y = 0; 
              });
@@ -433,18 +454,20 @@ class SurvivalGame {
         
         p.vx = dx; p.vy = dy;
         
-        // LOGICA DE MIRA (Facing) MELHORADA
+        // CORREÇÃO DE MIRA DIAGONAL
         if (dx !== 0 || dy !== 0) {
-            p.facing = { x: dx, y: dy };
-            const l = Math.hypot(dx, dy);
-            if(l > 0) { p.facing.x /= l; p.facing.y /= l; }
+            // Se está movendo, atualiza mira
+            const len = Math.hypot(dx, dy);
+            p.facing = { x: dx/len, y: dy/len };
         } else if(!p.facing) {
-             p.facing = {x: 1, y: 0}; // Padrão para direita
+            p.facing = {x: 1, y: 0};
         }
 
-        // MOVIMENTO + COLISÃO
+        // Movimento
         if(dx !== 0 || dy !== 0) {
-            const len = Math.hypot(dx,dy); const moveX = (dx/len)*p.speed*dt; const moveY = (dy/len)*p.speed*dt;
+            const len = Math.hypot(dx,dy); 
+            const moveX = (dx/len)*p.speed*dt; 
+            const moveY = (dy/len)*p.speed*dt;
             let canMoveX = true; let nextX = p.x + moveX;
             for(let t of this.decorations) { if(this.checkRectCollision(nextX, p.y, t)) { canMoveX = false; break; } }
             if(canMoveX) p.x += moveX;
@@ -459,13 +482,13 @@ class SurvivalGame {
         if(this.keys[' '] && !this.spacePressed) { this.spacePressed=true; this.handlePlayerAttack(); }
         if(!this.keys[' ']) this.spacePressed=false;
 
-        // PROJÉTEIS
+        // Projéteis
         this.projectiles = this.projectiles.filter(proj => {
             proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.life -= dt;
             if(proj.fromPlayer) {
                 const enemies = [...this.gameObjects];
                 for(let enemy of enemies) {
-                    // Aumentei hitbox
+                    // Hitbox aumentada
                     if(Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < 40 + (enemy.scale||1)*10) {
                         const res = gameEngine.playerAttack(enemy);
                         const mult = this.comboSystem.getMultiplier();
@@ -478,7 +501,7 @@ class SurvivalGame {
                     }
                 }
             } else {
-                if(Math.hypot(proj.x - p.x, proj.y - p.y) < 25) {
+                if(Math.hypot(proj.x - p.x, proj.y - p.y) < 20) {
                     const dmg = gameEngine.enemyAttack({damage: 15}); 
                     this.showFloatingText(`-${dmg.damage}`, p.x, p.y-40, '#f00');
                     if(this.audioManager) this.audioManager.play('hit_normal');
@@ -489,7 +512,7 @@ class SurvivalGame {
             return proj.life > 0;
         });
 
-        // INIMIGOS
+        // Inimigos
         const enemies = [...this.gameObjects];
         const now = performance.now();
         enemies.forEach(e => {
@@ -504,10 +527,12 @@ class SurvivalGame {
             } else { e.vx = 0; e.vy = 0; }
 
             if (isRanged) {
-                if (dist < 500 && now - (e.lastShot||0) > 2000) {
+                // Reduzida velocidade de ataque dos inimigos
+                if (dist < 500 && now - (e.lastShot||0) > 2500) {
                      e.lastShot = now;
                      const angle = Math.atan2(p.y - e.y, p.x - e.x);
-                     this.projectiles.push({ type: 'projectile', fromPlayer: false, x: e.x, y: e.y, vx: Math.cos(angle)*350, vy: Math.sin(angle)*350, life: 2, color: '#ff4757', style: 'magic' });
+                     // Projétil mais lento (180 de velocidade)
+                     this.projectiles.push({ type: 'projectile', fromPlayer: false, x: e.x, y: e.y, vx: Math.cos(angle)*180, vy: Math.sin(angle)*180, life: 3, color: '#ff4757', style: 'magic' });
                 }
             } else {
                 if(dist < 35 + (e.scale||1)*10 && now-e.lastAttack > 1000) {
@@ -525,37 +550,40 @@ class SurvivalGame {
     }
 
     checkRectCollision(px, py, t) {
-        const pW = 16; const pH = 8; const tW = t.width || 20; const tH = t.height || 15;
+        const tW = t.width || 20; const tH = t.height || 15;
         return (px > t.x - tW && px < t.x + tW && py > t.y - tH && py < t.y + tH);
     }
-    
+
     handlePlayerAttack() {
         const p = gameEngine.player;
-        let shotDirX = p.facing.x; let shotDirY = p.facing.y;
-        
-        // Normalização extra por segurança
-        const l = Math.hypot(shotDirX, shotDirY);
-        if(l > 0) { shotDirX /= l; shotDirY /= l; }
-        else { shotDirX = 1; shotDirY = 0; }
+        // Vetor de tiro base
+        let vecX = p.facing.x; 
+        let vecY = p.facing.y;
 
-        // Kiting Calculation
+        // KITING: Se ranged e andando, inverte
         const isMoving = (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1);
-        if (p.class.type === 'ranged' && isMoving) { 
-            shotDirX = -p.vx; shotDirY = -p.vy;
-            const l2 = Math.hypot(shotDirX, shotDirY);
-            if(l2 > 0) { shotDirX /= l2; shotDirY /= l2; }
+        if (p.class.type === 'ranged' && isMoving) {
+             vecX = -p.vx;
+             vecY = -p.vy;
+             // Normaliza vetor invertido
+             const l = Math.hypot(vecX, vecY);
+             if(l>0) { vecX/=l; vecY/=l; }
         }
 
         if (p.class.type === 'ranged') {
-            this.projectiles.push({ type: 'projectile', fromPlayer: true, x: p.x, y: p.y - 15, vx: shotDirX * 500, vy: shotDirY * 500, life: 0.8, color: p.class.color, style: p.class.projectile });
+            this.projectiles.push({ 
+                type: 'projectile', fromPlayer: true, x: p.x, y: p.y - 15, 
+                vx: vecX * 500, vy: vecY * 500, 
+                life: 0.8, color: p.class.color, style: p.class.projectile 
+            });
             if(this.audioManager) this.audioManager.play('player_attack');
         } else {
             let hit = false;
             [...this.gameObjects].forEach(e => {
-                // MELEE FIX: Ataque circular (sem dot product) + consideração de escala
                 const dist = Math.hypot(p.x-e.x, p.y-e.y);
-                // Alcance base 90 + tamanho do inimigo (scale * 20)
-                const reach = 100 + (e.scale || 1) * 20;
+                // Hitbox melee generosa (120px) e sem restrição de ângulo (ataque circular)
+                // + considera tamanho do inimigo
+                const reach = 120 + (e.scale||1)*20;
                 
                 if(dist < reach) { 
                     const res = gameEngine.playerAttack(e); 
@@ -572,6 +600,7 @@ class SurvivalGame {
     }
 
     showFloatingText(text, x, y, color) { this.floatingTexts.push({ text, x, y, color, life: 1.0 }); }
+    
     gameOver() { 
         document.getElementById('final-score').innerText = gameEngine.enemiesDefeated; 
         this.showScreen('game-over-screen'); 
@@ -579,6 +608,7 @@ class SurvivalGame {
     }
 
     draw() {
+        // ... (Mantém a função draw igual, ela está correta)
         const currentBiome = GAME_DATA.biomes.find(b => b.id === this.currentBiomeId);
         this.ctx.fillStyle = currentBiome ? (currentBiome.bgColor || '#1e272e') : '#1e272e';
         this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
@@ -590,14 +620,11 @@ class SurvivalGame {
         for(let x=startX; x<cx+this.canvas.width; x+=gridSize) { this.ctx.moveTo(x,cy); this.ctx.lineTo(x,cy+this.canvas.height); }
         for(let y=startY; y<cy+this.canvas.height; y+=gridSize) { this.ctx.moveTo(cx,y); this.ctx.lineTo(cx+this.canvas.width,y); }
         this.ctx.stroke();
-
         const all = [...this.gameObjects, p, ...this.decorations, ...this.projectiles];
         all.sort((a,b)=>(a.y||0)-(b.y||0));
         all.forEach(e=>PixelRenderer.drawSprite(this.ctx,e,e===p));
         this.floatingTexts.forEach(t=>{ this.ctx.globalAlpha=t.life; this.ctx.fillStyle='#000'; this.ctx.font='bold 16px Arial'; this.ctx.fillText(t.text,t.x+1,t.y+1); this.ctx.fillStyle=t.color; this.ctx.fillText(t.text,t.x,t.y); });
         this.ctx.restore();
-
-        // HUD
         this.ctx.globalAlpha=1;
         this.ctx.fillStyle='rgba(0,0,0,0.7)'; this.ctx.strokeStyle='#fff'; this.ctx.lineWidth=2;
         this.ctx.roundRect ? this.ctx.roundRect(10,10,300,100,10) : this.ctx.fillRect(10,10,300,100); this.ctx.fill(); this.ctx.stroke();
@@ -606,14 +633,9 @@ class SurvivalGame {
         this.ctx.fillStyle='#333'; this.ctx.fillRect(25,80,270,10); this.ctx.fillStyle='#e74c3c'; this.ctx.fillRect(25,80,270*(Math.max(0, p.currentHp)/p.maxHp),10); 
         if(this.abilitySystem) this.abilitySystem.renderCooldown(this.ctx, this.canvas.width - 60, 20, 40);
         if(this.comboSystem) this.comboSystem.render(this.ctx, 25, 140);
-        
-        // PAUSE OVERLAY
         if(this.paused) {
-            this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
-            this.ctx.fillStyle = '#fff';
-            this.ctx.font = '30px "Press Start 2P"';
-            this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = '#fff'; this.ctx.font = '30px "Press Start 2P"'; this.ctx.textAlign = 'center';
             this.ctx.fillText("PAUSADO", this.canvas.width/2, this.canvas.height/2);
         }
     }

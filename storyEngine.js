@@ -5,28 +5,36 @@ class StoryEngine {
         this.titleEl = document.getElementById('story-title');
         this.textEl = document.getElementById('story-text');
         this.nextBtn = document.getElementById('story-next-btn');
-        this.currentAction = null; // Armazena o que fazer ao clicar no botão
         
+        // Garante que o evento de clique existe
         if(this.nextBtn) {
             this.nextBtn.onclick = () => {
-                if(this.currentAction) {
-                    this.currentAction(); // Executa a função guardada (ex: enterNextBiome)
-                } else {
-                    // Fallback se não houver ação
-                    this.game.showScreen('game-screen');
-                }
+                this.handleNextClick();
             };
         }
     }
 
-    showStoryScreen(title, text, onComplete) {
-        this.currentAction = onComplete; // Guarda a função para ser chamada no clique
-        this.game.showScreen('story-screen');
-        if(this.titleEl) this.titleEl.innerHTML = title;
-        if(this.textEl) this.textEl.innerHTML = text;
+    handleNextClick() {
+        // Se tiver uma ação programada, executa
+        if (this.pendingAction) {
+            const action = this.pendingAction;
+            this.pendingAction = null; // Limpa para não repetir
+            action();
+        } else {
+            // Se não tiver, volta para o jogo (segurança)
+            this.game.showScreen('game-screen');
+        }
     }
 
-    // Início do Jogo
+    showStoryScreen(title, text, onComplete) {
+        this.pendingAction = onComplete; // Armazena a ação
+        
+        if(this.titleEl) this.titleEl.innerHTML = title;
+        if(this.textEl) this.textEl.innerHTML = text;
+        
+        this.game.showScreen('story-screen');
+    }
+
     startNewGameWithIntro() {
         const story = GAME_DATA.story.intro;
         this.showStoryScreen(story.title, story.text, () => {
@@ -35,7 +43,34 @@ class StoryEngine {
         });
     }
 
-    // Final do Jogo
+    showBiomeStory(biomeId, onComplete) {
+        const biomeData = GAME_DATA.biomes.find(b => b.id === biomeId);
+        let title = "";
+        let text = "";
+
+        // Prioriza texto específico do bioma se existir no gameData.story (não usado no momento mas preparado)
+        // Se não, usa o introText do bioma
+        if (biomeData && biomeData.introText) {
+            title = biomeData.name;
+            text = biomeData.introText;
+        }
+
+        if (text) {
+            this.showStoryScreen(title, text, onComplete);
+        } else {
+            onComplete();
+        }
+    }
+
+    showVictoryStory(biomeId, onComplete) {
+        const biomeData = GAME_DATA.biomes.find(b => b.id === biomeId);
+        if (biomeData && biomeData.victoryText) {
+            this.showStoryScreen(`${biomeData.name} - Concluído`, biomeData.victoryText, onComplete);
+        } else {
+            onComplete();
+        }
+    }
+    
     showEpilogue() {
         const story = GAME_DATA.story.epilogue;
         this.showStoryScreen(story.title, story.text, () => {
@@ -43,8 +78,8 @@ class StoryEngine {
         });
     }
 
-    // Método legado de compatibilidade, se chamado diretamente
+    // Fallback para HTML antigo
     nextChapter() {
-        if(this.currentAction) this.currentAction();
+        this.handleNextClick();
     }
 }

@@ -16,7 +16,8 @@
             <h1>CRÔNICAS DE ELANDOR</h1>
             <button class="btn btn--primary" onclick="if(storyEngine) storyEngine.startNewGameWithIntro()">Nova Jornada</button>
             <br><br>
-            <button class="btn" onclick="if(saveSystem) saveSystem.loadGame()">Carregar Jogo</button>
+            <input type="file" id="import-file" style="display:none" onchange="SaveSystem.importSave(this.files[0]).then(res=>{if(res) alert('Save importado! Tente carregar agora.')})">
+            <button class="btn" onclick="document.getElementById('import-file').click()">Importar Save</button>
         </div>
 
         <div id="story-screen" class="screen">
@@ -28,6 +29,14 @@
         <div id="class-selection-screen" class="screen">
             <h2>Escolha sua Classe</h2>
             <div id="class-grid"></div>
+        </div>
+
+        <div id="pause-screen" class="screen" style="background: rgba(0,0,0,0.8);">
+            <h2>PAUSADO</h2>
+            <button class="btn" onclick="game.togglePause()">Continuar</button>
+            <button class="btn" onclick="SaveSystem.saveGame(game, 'Player', 1); alert('Salvo no navegador!')">Salvar Rápido</button>
+            <button class="btn" onclick="SaveSystem.exportSave(1)">Baixar Save (Arquivo)</button>
+            <button class="btn" style="border-color:#d63031" onclick="location.reload()">Sair</button>
         </div>
 
         <div id="game-screen" class="screen"></div>
@@ -45,6 +54,7 @@
             <div class="control-btn control-right">→</div>
             <div class="control-btn control-action">⚔</div>
             <div class="control-btn control-skill" style="bottom: 140px; right: 30px; background:rgba(52, 152, 219, 0.4); font-size:1.5rem;">Q</div>
+            <div class="control-btn" style="top: 20px; right: 20px; width:40px; height:40px; font-size:1rem;" onclick="game.togglePause()">II</div>
         </div>
     </div>
 
@@ -58,20 +68,13 @@
     <script src="survivalGame.js"></script>
 
     <script>
-        // Variáveis globais para o jogo e história
-        // OBS: gameEngine e audioManager já foram criados nos seus arquivos (são globais)
         let game; 
         let storyEngine; 
         
         window.onload = () => {
-            // 1. Inicializa o Jogo (Canvas, Loop, etc)
             game = new SurvivalGame();
-            
-            // 2. Inicializa a História (passando a instância do jogo)
             storyEngine = new StoryEngine(game);
             
-            // 3. Configurações adicionais
-            // Garante que o botão de continuar da história funcione caso o StoryEngine não tenha configurado
             const nextBtn = document.getElementById('story-next-btn');
             if (nextBtn) {
                 nextBtn.onclick = () => {
@@ -79,14 +82,13 @@
                 };
             }
             
-            // 4. Controles Mobile (Skill Q)
             const qBtn = document.querySelector('.control-skill');
             if(qBtn && game) {
                 qBtn.addEventListener('touchstart', (e) => { e.preventDefault(); game.keys['q'] = true; });
                 qBtn.addEventListener('touchend', (e) => { e.preventDefault(); game.keys['q'] = false; });
             }
 
-            console.log("✅ Jogo Inicializado com Sucesso!");
+            console.log("✅ Jogo Inicializado!");
         };
     </script>
 </body>
